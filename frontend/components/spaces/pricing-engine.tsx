@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -68,6 +69,7 @@ export function PricingEngine({ pricing, onChange }: PricingEngineProps) {
   // Use local state for UI toggles to prevent unnecessary re-renders
   const [localPeakPricing, setLocalPeakPricing] = useState(pricing.isPeakPricingEnabled)
   const [localPromoCodes, setLocalPromoCodes] = useState(pricing.isPromoCodesEnabled)
+  const [currency, setCurrency] = useState<'USD' | 'EUR' | 'GBP' | 'INR'>('USD')
 
   // Update parent when local state changes (avoid depending on onChange)
   useEffect(() => {
@@ -187,7 +189,7 @@ export function PricingEngine({ pricing, onChange }: PricingEngineProps) {
   }
 
   return (
-    <Card className="w-full">
+    <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
         <CardTitle>Pricing Engine</CardTitle>
       </CardHeader>
@@ -217,13 +219,24 @@ export function PricingEngine({ pricing, onChange }: PricingEngineProps) {
           <TabsContent value="hourly" className="space-y-4">
             <div className="space-y-2">
               <Label>Base Hourly Rate</Label>
-              <div className="relative">
-                <span className="absolute left-3 top-2.5">$</span>
-                <Input 
-                  type="number" 
-                  value={basePrice} 
-                  onChange={(e) => setBasePrice(Number(e.target.value))} 
-                  className="pl-8"
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <Select value={currency} onValueChange={(v) => setCurrency(v as any)}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USD">USD ($)</SelectItem>
+                      <SelectItem value="EUR">EUR (€)</SelectItem>
+                      <SelectItem value="GBP">GBP (£)</SelectItem>
+                      <SelectItem value="INR">INR (₹)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Input
+                  type="number"
+                  value={basePrice}
+                  onChange={(e) => setBasePrice(Number(e.target.value))}
                   min={0}
                   step={0.01}
                 />
@@ -234,13 +247,24 @@ export function PricingEngine({ pricing, onChange }: PricingEngineProps) {
           <TabsContent value="daily" className="space-y-4">
             <div className="space-y-2">
               <Label>Daily Rate</Label>
-              <div className="relative">
-                <span className="absolute left-3 top-2.5">$</span>
-                <Input 
-                  type="number" 
-                  value={dailyRate} 
-                  onChange={(e) => setDailyRate(Number(e.target.value))} 
-                  className="pl-8"
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <Select value={currency} onValueChange={(v) => setCurrency(v as any)}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USD">USD ($)</SelectItem>
+                      <SelectItem value="EUR">EUR (€)</SelectItem>
+                      <SelectItem value="GBP">GBP (£)</SelectItem>
+                      <SelectItem value="INR">INR (₹)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Input
+                  type="number"
+                  value={dailyRate}
+                  onChange={(e) => setDailyRate(Number(e.target.value))}
                   min={0}
                   step={0.01}
                 />
@@ -251,13 +275,24 @@ export function PricingEngine({ pricing, onChange }: PricingEngineProps) {
           <TabsContent value="monthly" className="space-y-4">
             <div className="space-y-2">
               <Label>Monthly Rate</Label>
-              <div className="relative">
-                <span className="absolute left-3 top-2.5">$</span>
-                <Input 
-                  type="number" 
-                  value={monthlyRate} 
-                  onChange={(e) => setMonthlyRate(Number(e.target.value))} 
-                  className="pl-8"
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <Select value={currency} onValueChange={(v) => setCurrency(v as any)}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USD">USD ($)</SelectItem>
+                      <SelectItem value="EUR">EUR (€)</SelectItem>
+                      <SelectItem value="GBP">GBP (£)</SelectItem>
+                      <SelectItem value="INR">INR (₹)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Input
+                  type="number"
+                  value={monthlyRate}
+                  onChange={(e) => setMonthlyRate(Number(e.target.value))}
                   min={0}
                   step={0.01}
                 />
@@ -268,13 +303,24 @@ export function PricingEngine({ pricing, onChange }: PricingEngineProps) {
           <TabsContent value="peak_off_peak" className="space-y-4">
             <div className="space-y-2">
               <Label>Base Price</Label>
-              <div className="relative">
-                <span className="absolute left-3 top-2.5">$</span>
-                <Input 
-                  type="number" 
-                  value={basePrice} 
-                  onChange={(e) => setBasePrice(Number(e.target.value))} 
-                  className="pl-8"
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <Select value={currency} onValueChange={(v) => setCurrency(v as any)}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USD">USD ($)</SelectItem>
+                      <SelectItem value="EUR">EUR (€)</SelectItem>
+                      <SelectItem value="GBP">GBP (£)</SelectItem>
+                      <SelectItem value="INR">INR (₹)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Input
+                  type="number"
+                  value={basePrice}
+                  onChange={(e) => setBasePrice(Number(e.target.value))}
                   min={0}
                   step={0.01}
                 />
@@ -421,13 +467,24 @@ export function PricingEngine({ pricing, onChange }: PricingEngineProps) {
                     </div>
                     <div>
                       <Label>Price</Label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-2.5">$</span>
-                        <Input 
-                          type="number" 
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                          <Select value={currency} onValueChange={(v) => setCurrency(v as any)}>
+                            <SelectTrigger className="h-10">
+                              <SelectValue placeholder="Currency" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="USD">USD ($)</SelectItem>
+                              <SelectItem value="EUR">EUR (€)</SelectItem>
+                              <SelectItem value="GBP">GBP (£)</SelectItem>
+                              <SelectItem value="INR">INR (₹)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Input
+                          type="number"
                           value={block.price}
                           onChange={(e) => updateTimeBlock(block.id, 'price', Number(e.target.value))}
-                          className="pl-8"
                           min={0}
                           step={0.01}
                         />
@@ -512,28 +569,54 @@ export function PricingEngine({ pricing, onChange }: PricingEngineProps) {
                     </div>
                     <div>
                       <Label>Value</Label>
-                      <div className="relative">
-                        {promo.discountType === 'percentage' && (
+                      {promo.discountType === 'fixed' ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div>
+                            <Select value={currency} onValueChange={(v) => setCurrency(v as any)}>
+                              <SelectTrigger className="h-10">
+                                <SelectValue placeholder="Currency" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="USD">USD ($)</SelectItem>
+                                <SelectItem value="EUR">EUR (€)</SelectItem>
+                                <SelectItem value="GBP">GBP (£)</SelectItem>
+                                <SelectItem value="INR">INR (₹)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <Input
+                            type="number"
+                            value={promo.value}
+                            onChange={(e) => {
+                              setPromoCodes(promoCodes.map(p => 
+                                p.code === promo.code 
+                                  ? { ...p, value: Number(e.target.value) }
+                                  : p
+                              ))
+                            }}
+                            min={0}
+                            step={0.01}
+                          />
+                        </div>
+                      ) : (
+                        <div className="relative">
                           <span className="absolute right-3 top-2.5 text-muted-foreground">%</span>
-                        )}
-                        {promo.discountType === 'fixed' && (
-                          <span className="absolute left-3 top-2.5">$</span>
-                        )}
-                        <Input 
-                          type="number" 
-                          value={promo.value}
-                          onChange={(e) => {
-                            setPromoCodes(promoCodes.map(p => 
-                              p.code === promo.code 
-                                ? { ...p, value: Number(e.target.value) }
-                                : p
-                            ))
-                          }}
-                          className={promo.discountType === 'fixed' ? 'pl-8' : 'pr-8'}
-                          min={0}
-                          step={0.01}
-                        />
-                      </div>
+                          <Input
+                            type="number"
+                            value={promo.value}
+                            onChange={(e) => {
+                              setPromoCodes(promoCodes.map(p => 
+                                p.code === promo.code 
+                                  ? { ...p, value: Number(e.target.value) }
+                                  : p
+                              ))
+                            }}
+                            className="pr-8"
+                            min={0}
+                            step={0.01}
+                          />
+                        </div>
+                      )}
                     </div>
                     <div>
                       <Label>Valid Until</Label>
