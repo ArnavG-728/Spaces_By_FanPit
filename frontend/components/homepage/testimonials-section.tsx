@@ -10,7 +10,7 @@ const testimonials = [
     avatar: "/placeholder.svg?height=40&width=40",
     rating: 5,
     content:
-      "SpaceBook made finding the perfect venue for our corporate event so easy. The booking process was seamless and the space exceeded our expectations!",
+      "Spaces made finding the perfect venue for our corporate event so easy. The booking process was seamless and the space exceeded our expectations!",
   },
   {
     id: 2,
@@ -28,7 +28,7 @@ const testimonials = [
     avatar: "/placeholder.svg?height=40&width=40",
     rating: 5,
     content:
-      "The quality of spaces on SpaceBook is outstanding. We've hosted multiple team events and each venue has been perfect for our needs.",
+      "The quality of spaces on Spaces is outstanding. We've hosted multiple team events and each venue has been perfect for our needs.",
   },
 ]
 

@@ -14,7 +14,7 @@ const blinker = Blinker({
 })
 
 export const metadata: Metadata = {
-  title: "SpaceBook - Book Your Perfect Space",
+  title: "Spaces - Book Your Perfect Space",
   description: "Browse, book, and manage event spaces, co-working areas, and hangout spots",
   generator: "v0.app",
 }
@@ -25,8 +25,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`font-sans ${blinker.variable} antialiased`}>
+    <html lang="en" suppressHydrationWarning className={blinker.variable}>
+      <body className="font-sans antialiased">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <AuthProvider>
             <Suspense fallback={null}>{children}</Suspense>

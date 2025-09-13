@@ -3,7 +3,7 @@
 import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
 
 export function Navbar() {
@@ -25,9 +25,9 @@ export function Navbar() {
 
   return (
     <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+      <div className="container mx-auto px-6 sm:px-8 h-16 flex items-center justify-between">
         <Link href="/" className="text-2xl font-bold text-primary">
-          SpaceBook
+          Spaces
         </Link>
 
         <div className="flex items-center gap-4">
@@ -38,11 +38,14 @@ export function Navbar() {
               </Link>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <button className="relative h-8 w-8 rounded-full">
+                    <span className="sr-only">Open user menu</span>
                     <Avatar className="h-8 w-8">
-                      <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
+                      <AvatarFallback className="bg-[#8C52FF] text-white">
+                        {user?.name?.charAt(0).toUpperCase()}
+                      </AvatarFallback>
                     </Avatar>
-                  </Button>
+                  </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuItem className="font-normal">

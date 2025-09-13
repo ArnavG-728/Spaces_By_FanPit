@@ -1,6 +1,22 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Reset and base styles */
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Ensure Radix UI dropdowns are clickable */
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
+}
+
+/* Make sure dropdown content is visible */
+[data-radix-menu-content] {
+  z-index: 9999 !important;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {

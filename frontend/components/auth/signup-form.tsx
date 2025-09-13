@@ -27,7 +27,7 @@ export function SignupForm() {
       await signup(email, password, name, role)
       toast({
         title: "Account created successfully!",
-        description: "Welcome to SpaceBook",
+        description: "Welcome to Spaces",
       })
       switch (role) {
         case "consumer":
@@ -55,7 +55,7 @@ export function SignupForm() {
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
         <CardTitle>Create Account</CardTitle>
-        <CardDescription>Join SpaceBook and start booking amazing spaces</CardDescription>
+        <CardDescription>Join Spaces and start booking amazing spaces</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">

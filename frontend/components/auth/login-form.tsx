@@ -57,7 +57,7 @@ export function LoginForm() {
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
         <CardTitle>Welcome Back</CardTitle>
-        <CardDescription>Sign in to your SpaceBook account</CardDescription>
+        <CardDescription>Sign in to your Spaces account</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
