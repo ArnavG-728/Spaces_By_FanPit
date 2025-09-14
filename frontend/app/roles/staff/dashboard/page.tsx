@@ -16,7 +16,7 @@ export default function StaffDashboardPage() {
     }
     if (!loading && user && user.role !== "staff") {
       if (user.role === "consumer") router.replace("/dashboard")
-      if (user.role === "owner") router.replace("/owner/dashboard")
+      if (user.role === "owner") router.replace("roles/owner/dashboard")
     }
   }, [user, loading, router])
 

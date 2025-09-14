@@ -1,40 +1,44 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { CreateSpaceDto } from './dto/create-space.dto';
+import { UpdateSpaceDto } from './dto/update-space.dto';
 import { Space, SpaceDocument } from './schemas/space.schema';
 
 @Injectable()
 export class SpacesService {
-  constructor(
-    @InjectModel(Space.name) private readonly spaceModel: Model<SpaceDocument>,
-  ) {}
+  constructor(@InjectModel(Space.name) private spaceModel: Model<SpaceDocument>) {}
 
-  async findAll() {
-    return this.spaceModel.find().lean();
+  async create(createSpaceDto: CreateSpaceDto): Promise<Space> {
+    const createdSpace = new this.spaceModel(createSpaceDto);
+    return createdSpace.save();
   }
 
-  async findOne(id: string) {
-    const doc = await this.spaceModel.findById(id).lean();
-    if (!doc) throw new NotFoundException('Space not found');
-    return doc;
+  async findAll(): Promise<Space[]> {
+    return this.spaceModel.find().populate('owner').exec();
   }
 
-  async create(payload: Omit<Space, '_id'>) {
-    const created = await this.spaceModel.create(payload as any);
-    return created.toObject();
+  async findOne(id: string): Promise<Space> {
+    const space = await this.spaceModel.findById(id).populate('owner').exec();
+    if (!space) {
+      throw new NotFoundException(`Space with ID "${id}" not found`);
+    }
+    return space;
   }
 
-  async update(id: string, payload: Partial<Space>) {
-    const updated = await this.spaceModel
-      .findByIdAndUpdate(id, payload, { new: true })
-      .lean();
-    if (!updated) throw new NotFoundException('Space not found');
-    return updated;
+  async update(id: string, updateSpaceDto: UpdateSpaceDto): Promise<Space> {
+    const existingSpace = await this.spaceModel.findByIdAndUpdate(id, updateSpaceDto, { new: true }).exec();
+    if (!existingSpace) {
+      throw new NotFoundException(`Space with ID "${id}" not found`);
+    }
+    return existingSpace;
   }
 
-  async remove(id: string) {
-    const res = await this.spaceModel.findByIdAndDelete(id).lean();
-    if (!res) throw new NotFoundException('Space not found');
-    return { deleted: true } as const;
+  async remove(id: string): Promise<Space> {
+    const deletedSpace = await this.spaceModel.findByIdAndDelete(id).exec();
+    if (!deletedSpace) {
+      throw new NotFoundException(`Space with ID "${id}" not found`);
+    }
+    return deletedSpace;
   }
 }

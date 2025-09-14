@@ -1,10 +1,21 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { SpacesService } from './spaces.service';
-import { Space } from './schemas/space.schema';
+import { CreateSpaceDto } from './dto/create-space.dto';
+import { UpdateSpaceDto } from './dto/update-space.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 
 @Controller('spaces')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class SpacesController {
   constructor(private readonly spacesService: SpacesService) {}
+
+  @Post()
+  @Roles('owner', 'staff')
+  create(@Body() createSpaceDto: CreateSpaceDto) {
+    return this.spacesService.create(createSpaceDto);
+  }
 
   @Get()
   findAll() {
@@ -16,17 +27,14 @@ export class SpacesController {
     return this.spacesService.findOne(id);
   }
 
-  @Post()
-  create(@Body() body: Omit<Space, '_id'>) {
-    return this.spacesService.create(body);
-  }
-
   @Patch(':id')
-  update(@Param('id') id: string, @Body() body: Partial<Space>) {
-    return this.spacesService.update(id, body);
+  @Roles('owner', 'staff')
+  update(@Param('id') id: string, @Body() updateSpaceDto: UpdateSpaceDto) {
+    return this.spacesService.update(id, updateSpaceDto);
   }
 
   @Delete(':id')
+  @Roles('owner', 'staff')
   remove(@Param('id') id: string) {
     return this.spacesService.remove(id);
   }

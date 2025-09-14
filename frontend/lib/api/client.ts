@@ -12,10 +12,14 @@ export type Space = {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  // Get token from localStorage
+  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+  
   const res = await fetch(`${API_BASE}${path}` as string, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
       ...(init?.headers || {}),
     },
     cache: 'no-store',

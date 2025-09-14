@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { useAuth, type UserRole } from "@/contexts/auth-context"
+import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,33 +16,40 @@ export function SignupForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [name, setName] = useState("")
-  const [role, setRole] = useState<UserRole>("consumer")
-  const { signup, loading } = useAuth()
+  const [role, setRole] = useState<'consumer' | 'owner' | 'staff'>("consumer")
+  const { signup, isLoading } = useAuth()
   const { toast } = useToast()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
+    console.log('[SignupForm] Submit clicked');
+    const nameParts = name.trim().split(/\s+/);
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || firstName; // Default to firstName if lastName is empty
+
+    const fullName = `${firstName} ${lastName}`.trim();
+
+    if (password.length < 8) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 8 characters long",
+        variant: "destructive",
+      })
+      return;
+    }
+
+    console.log('[SignupForm] Payload', { email, fullName, role });
     try {
-      await signup(email, password, name, role)
+      await signup(email, password, fullName, role);
       toast({
         title: "Account created successfully!",
         description: "Welcome to Spaces",
       })
-      switch (role) {
-        case "consumer":
-          router.push("/roles/consumer/dashboard")
-          break
-        case "owner":
-          router.push("/roles/owner/dashboard")
-          break
-        case "staff":
-          router.push("/roles/staff/dashboard")
-          break
-        default:
-          router.push("/roles/consumer/dashboard")
-      }
+      // Let auth context handle redirect after user state is updated
+      // No manual redirect needed here
     } catch (error) {
+      console.error('[SignupForm] Signup failed:', error);
       toast({
         title: "Signup failed",
         description: "Please try again",
@@ -74,12 +81,16 @@ export function SignupForm() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              minLength={8}
               required
             />
+            <div className="text-xs text-muted-foreground">
+              Password must be at least 8 characters long
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="role">Account Type</Label>
-            <Select value={role} onValueChange={(value: UserRole) => setRole(value)}>
+            <Select value={role} onValueChange={(value: 'consumer' | 'owner' | 'staff') => setRole(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select your role" />
               </SelectTrigger>
@@ -90,8 +101,8 @@ export function SignupForm() {
               </SelectContent>
             </Select>
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating Account..." : "Create Account"}
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Creating Account..." : "Create Account"}
           </Button>
         </form>
       </CardContent>

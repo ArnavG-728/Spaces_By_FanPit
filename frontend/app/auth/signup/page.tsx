@@ -7,26 +7,27 @@ import { useEffect } from "react"
 import { Navbar } from "@/components/navbar"
 
 export default function SignupPage() {
-  const { user, loading } = useAuth()
+  const { user, isLoading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (!loading && user) {
+    if (!isLoading && user) {
       // Redirect to appropriate dashboard if already logged in
+      console.log('[SignupPage] User logged in, redirecting to dashboard:', user.role);
       switch (user.role) {
         case 'owner':
-          router.push('/roles/owner/dashboard')
+          router.replace('/roles/owner/dashboard')
           break
         case 'staff':
-          router.push('/roles/staff/dashboard')
+          router.replace('/roles/staff/dashboard')
           break
         default:
-          router.push('/roles/consumer/dashboard')
+          router.replace('/roles/consumer/dashboard')
       }
     }
-  }, [user, loading, router])
+  }, [user, isLoading, router])
 
-  if (loading || user) {
+  if (isLoading || user) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />

@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react";
+import api from "@/lib/api";
 import { useAuth } from "@/contexts/auth-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -14,99 +15,58 @@ import { Calendar, CheckCircle, Search, QrCode, UserCheck, UserX, Flag } from "l
 import { format } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 
-// Mock data - replace with actual API calls
-const mockTodayBookings = [
-  {
-    id: "1",
-    bookingCode: "SB001234",
-    spaceName: "Modern Event Hall",
-    customerName: "John Smith",
-    customerPhone: "+1 (555) 123-4567",
-    startTime: "14:00",
-    endTime: "18:00",
-    guests: 150,
-    status: "pending",
-    specialRequests: "Need extra chairs and microphone setup",
-    checkInTime: null,
-    checkOutTime: null,
-  },
-  {
-    id: "2",
-    bookingCode: "SB001235",
-    spaceName: "Creative Studio",
-    customerName: "Sarah Johnson",
-    customerPhone: "+1 (555) 987-6543",
-    startTime: "09:00",
-    endTime: "17:00",
-    guests: 25,
-    status: "checked-in",
-    specialRequests: "Vegetarian catering requested",
-    checkInTime: "08:45",
-    checkOutTime: null,
-  },
-  {
-    id: "3",
-    bookingCode: "SB001236",
-    spaceName: "Rooftop Lounge",
-    customerName: "Mike Chen",
-    customerPhone: "+1 (555) 456-7890",
-    startTime: "19:00",
-    endTime: "23:00",
-    guests: 80,
-    status: "completed",
-    specialRequests: null,
-    checkInTime: "18:50",
-    checkOutTime: "23:15",
-  },
-  {
-    id: "4",
-    bookingCode: "SB001237",
-    spaceName: "Conference Room A",
-    customerName: "Emily Davis",
-    customerPhone: "+1 (555) 321-0987",
-    startTime: "10:00",
-    endTime: "12:00",
-    guests: 15,
-    status: "no-show",
-    specialRequests: null,
-    checkInTime: null,
-    checkOutTime: null,
-  },
-]
+// Define types for our data
+interface User {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
 
-const mockIssues = [
-  {
-    id: "1",
-    bookingCode: "SB001234",
-    spaceName: "Modern Event Hall",
-    issue: "Air conditioning not working properly",
-    priority: "high",
-    status: "open",
-    reportedAt: "2024-12-15T10:30:00Z",
-  },
-  {
-    id: "2",
-    bookingCode: "SB001235",
-    spaceName: "Creative Studio",
-    issue: "WiFi password not working",
-    priority: "medium",
-    status: "resolved",
-    reportedAt: "2024-12-15T09:15:00Z",
-  },
-]
+interface Space {
+  _id: string;
+  name: string;
+  capacity: number;
+}
+
+interface Reservation {
+  id: string;
+  user: User;
+  space: Space;
+  startTime: string;
+  endTime: string;
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  totalPrice: number;
+  notes?: string;
+}
+
+interface Checkin {
+  _id: string;
+  reservation: string;
+  checkinTime: string;
+}
+
+// We will define a more complete Issue type later
+interface Issue {
+  id: string;
+  bookingCode: string;
+  spaceName: string;
+  issue: string;
+  priority: string;
+  status: string;
+  reportedAt: string;
+}
 
 const getStatusColor = (status: string) => {
   switch (status) {
     case "pending":
       return "bg-yellow-100 text-yellow-800"
-    case "checked-in":
+    case "confirmed":
       return "bg-blue-100 text-blue-800"
     case "completed":
       return "bg-green-100 text-green-800"
-    case "no-show":
-      return "bg-red-100 text-red-800"
     case "cancelled":
-      return "bg-gray-100 text-gray-800"
+      return "bg-red-100 text-red-800"
     default:
       return "bg-gray-100 text-gray-800"
   }
@@ -128,6 +88,9 @@ const getPriorityColor = (priority: string) => {
 export function StaffDashboard() {
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState("today")
+  const [bookings, setBookings] = useState<Reservation[]>([])
+  const [issues, setIssues] = useState<Issue[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchCode, setSearchCode] = useState("")
   const [newIssue, setNewIssue] = useState({
     bookingCode: "",
@@ -136,61 +99,111 @@ export function StaffDashboard() {
   })
   const { toast } = useToast()
 
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        // In a real app, you'd fetch from your API endpoint
+        // For now, we'll use an empty array as we've removed mock data
+        const { data: reservations } = await api.get('/reservations');
+        setBookings(reservations);
+        setIssues([]); // Issues will be implemented later
+
+      } catch (error) {
+        toast({
+          title: "Error fetching data",
+          description: "Could not load dashboard data. Please try again later.",
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [toast])
+
   const todayStats = {
-    totalBookings: mockTodayBookings.length,
-    checkedIn: mockTodayBookings.filter((b) => b.status === "checked-in").length,
-    completed: mockTodayBookings.filter((b) => b.status === "completed").length,
-    noShows: mockTodayBookings.filter((b) => b.status === "no-show").length,
+    totalBookings: bookings.length,
+    checkedIn: bookings.filter((b) => b.status === "confirmed").length, // Assuming 'confirmed' means checked-in for now
+    completed: bookings.filter((b) => b.status === "completed").length,
+    noShows: bookings.filter((b) => b.status === "cancelled").length, // Assuming 'cancelled' can represent no-shows
   }
 
-  const handleCheckIn = (bookingId: string) => {
-    toast({
-      title: "Guest Checked In",
-      description: "Guest has been successfully checked in.",
-    })
-    // Update booking status in real app
-  }
+  const handleCheckIn = async (bookingId: string) => {
+    if (!user) return;
+    try {
+            await api.post('/checkins', { reservation: bookingId, user: user.id });
+      await api.patch(`/reservations/${bookingId}`, { status: 'confirmed' });
 
-  const handleCheckOut = (bookingId: string) => {
-    toast({
-      title: "Guest Checked Out",
-      description: "Guest has been successfully checked out.",
-    })
-    // Update booking status in real app
-  }
+      toast({
+        title: "Guest Checked In",
+        description: "Guest has been successfully checked in.",
+      });
 
-  const handleMarkNoShow = (bookingId: string) => {
-    toast({
-      title: "Marked as No-Show",
-      description: "Booking has been marked as no-show.",
-    })
-    // Update booking status in real app
-  }
+      // Refresh data
+      const res = await fetch('http://localhost:3000/reservations');
+      const updatedBookings = await res.json();
+      setBookings(updatedBookings);
 
-  const handleSearchBooking = () => {
+    } catch (error) {
+      toast({
+        title: "Check-in Failed",
+        description: (error as Error).message || "Could not check in the guest.",
+        variant: "destructive",
+      });
+    }
+  };
+
+
+  const handleMarkNoShow = async (bookingId: string) => {
+    try {
+      await api.patch(`/reservations/${bookingId}`, { status: 'cancelled' });
+
+      toast({
+        title: "Marked as No-Show",
+        description: "Booking has been marked as no-show.",
+      });
+
+      // Refresh data
+      const res = await fetch('http://localhost:3000/reservations');
+      const updatedBookings = await res.json();
+      setBookings(updatedBookings);
+
+    } catch (error) {
+      toast({
+        title: "Update Failed",
+        description: (error as Error).message || "Could not update the booking status.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSearchBooking = async () => {
     if (!searchCode) {
       toast({
         title: "Enter Booking Code",
         description: "Please enter a booking code to search.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
-    const booking = mockTodayBookings.find((b) => b.bookingCode.toLowerCase().includes(searchCode.toLowerCase()))
-    if (booking) {
+    try {
+      const { data: booking } = await api.get(`/reservations/${searchCode}`);
+      // For simplicity, we'll just toast. A real app might show the booking details.
       toast({
         title: "Booking Found",
-        description: `Found booking for ${booking.customerName} at ${booking.spaceName}`,
-      })
-    } else {
+        description: `Found booking for ${booking.user.firstName} at ${booking.space.name}`,
+      });
+    } catch (error) {
       toast({
         title: "Booking Not Found",
         description: "No booking found with that code.",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   const handleReportIssue = () => {
     if (!newIssue.bookingCode || !newIssue.issue) {
@@ -279,12 +292,12 @@ export function StaffDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {mockTodayBookings.map((booking) => (
+                {bookings.map((booking) => (
                   <div key={booking.id} className="border rounded-lg p-4">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-semibold">{booking.spaceName}</h3>
+                          <h3 className="text-lg font-semibold">{booking.space.name}</h3>
                           <Badge className={getStatusColor(booking.status)}>
                             {booking.status.replace("-", " ").toUpperCase()}
                           </Badge>
@@ -293,38 +306,27 @@ export function StaffDashboard() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-muted-foreground">
                           <div>
                             <p>
-                              <strong>Customer:</strong> {booking.customerName}
+                              <strong>Customer:</strong> {`${booking.user.firstName} ${booking.user.lastName}`}
                             </p>
                             <p>
-                              <strong>Phone:</strong> {booking.customerPhone}
-                            </p>
+                              </p>
                             <p>
-                              <strong>Booking Code:</strong> {booking.bookingCode}
+                              <strong>Booking Code:</strong> {booking.id}
                             </p>
                           </div>
                           <div>
                             <p>
-                              <strong>Time:</strong> {booking.startTime} - {booking.endTime}
+                              <strong>Time:</strong> {format(new Date(booking.startTime), "HH:mm")} - {format(new Date(booking.endTime), "HH:mm")}
                             </p>
                             <p>
-                              <strong>Guests:</strong> {booking.guests}
+                              <strong>Capacity:</strong> {booking.space.capacity}
                             </p>
-                            {booking.checkInTime && (
-                              <p>
-                                <strong>Checked In:</strong> {booking.checkInTime}
-                              </p>
-                            )}
-                            {booking.checkOutTime && (
-                              <p>
-                                <strong>Checked Out:</strong> {booking.checkOutTime}
-                              </p>
-                            )}
                           </div>
                         </div>
 
-                        {booking.specialRequests && (
+                        {booking.notes && (
                           <div className="mt-2 p-2 bg-muted rounded text-sm">
-                            <strong>Special Requests:</strong> {booking.specialRequests}
+                            <strong>Notes:</strong> {booking.notes}
                           </div>
                         )}
                       </div>
@@ -343,16 +345,16 @@ export function StaffDashboard() {
                           </>
                         )}
 
-                        {booking.status === "checked-in" && (
-                          <Button size="sm" onClick={() => handleCheckOut(booking.id)}>
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Check Out
+                        {booking.status === "confirmed" && (
+                          <Button variant="outline" size="sm" disabled>
+                            <UserCheck className="mr-2 h-4 w-4" />
+                            Checked In
                           </Button>
                         )}
 
-                        {(booking.status === "completed" || booking.status === "no-show") && (
+                        {(booking.status === "completed" || booking.status === "cancelled") && (
                           <Button variant="outline" size="sm" disabled>
-                            {booking.status === "completed" ? "Completed" : "No Show"}
+                            {booking.status === "completed" ? "Completed" : "Cancelled"}
                           </Button>
                         )}
                       </div>
@@ -472,7 +474,7 @@ export function StaffDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {mockIssues.map((issue) => (
+                  {issues.map((issue) => (
                     <div key={issue.id} className="border rounded-lg p-4">
                       <div className="flex items-start justify-between mb-2">
                         <div>

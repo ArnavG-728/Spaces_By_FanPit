@@ -7,20 +7,20 @@ import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
 export default function OwnerDashboardPage() {
-  const { user, loading } = useAuth()
+  const { user, isLoading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!isLoading && !user) {
       router.replace("/auth/login")
     }
-    if (!loading && user && user.role !== "owner") {
+    if (!isLoading && user && user.role !== "owner") {
       if (user.role === "consumer") router.replace("/dashboard")
       if (user.role === "staff") router.replace("/roles/staff/dashboard")
     }
-  }, [user, loading, router])
+  }, [user, isLoading, router])
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
