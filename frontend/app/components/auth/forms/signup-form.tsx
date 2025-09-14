@@ -31,16 +31,16 @@ export function SignupForm() {
       })
       switch (role) {
         case "consumer":
-          router.push("/dashboard")
+          router.push("/roles/consumer/dashboard")
           break
         case "owner":
-          router.push("/owner/dashboard")
+          router.push("/roles/owner/dashboard")
           break
         case "staff":
-          router.push("/staff/dashboard")
+          router.push("/roles/staff/dashboard")
           break
         default:
-          router.push("/dashboard")
+          router.push("/roles/consumer/dashboard")
       }
     } catch (error) {
       toast({

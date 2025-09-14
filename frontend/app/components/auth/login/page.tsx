@@ -15,13 +15,13 @@ export default function LoginPage() {
       // Redirect to appropriate dashboard if already logged in
       switch (user.role) {
         case 'owner':
-          router.push('/owner/dashboard')
+          router.push('/')
           break
         case 'staff':
-          router.push('/staff/dashboard')
+          router.push('/roles/staff/dashboard')
           break
         default:
-          router.push('/dashboard')
+          router.push('/roles/consumer/dashboard')
       }
     }
   }, [user, router])

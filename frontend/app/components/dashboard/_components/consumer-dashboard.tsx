@@ -1,12 +1,13 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calendar, MapPin, Clock, CreditCard, Star } from "lucide-react"
+import { Calendar, MapPin, Clock, CreditCard, Star, Search } from "lucide-react"
 import { format } from "date-fns"
 
 // Mock data - replace with actual API calls
@@ -67,6 +68,7 @@ const getStatusColor = (status: string) => {
 export function ConsumerDashboard() {
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState("upcoming")
+  const router = useRouter()
 
   const upcomingBookings = mockBookings.filter(
     (booking) => booking.status === "confirmed" || booking.status === "pending",
@@ -76,7 +78,17 @@ export function ConsumerDashboard() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Welcome back, {user?.name}!</h1>
+        <div className="flex justify-between items-center mb-2">
+          <h1 className="text-3xl font-bold">Welcome back, {user?.name}!</h1>
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-2"
+            onClick={() => router.push('/roles/consumer/dashboard/spaces')}
+          >
+            <Search className="h-4 w-4" />
+            View All Spaces
+          </Button>
+        </div>
         <p className="text-muted-foreground">Manage your bookings and discover new spaces</p>
       </div>
 

@@ -2,11 +2,11 @@
 
 import { useAuth } from "@/contexts/auth-context"
 import { Navbar } from "@/components/navbar"
-import { ConsumerDashboard } from "./_components/consumer-dashboard"
+import { OwnerDashboard } from "@/app/roles/owner/owner-dashboard"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
-export default function DashboardPage() {
+export default function OwnerDashboardPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
 
@@ -14,8 +14,8 @@ export default function DashboardPage() {
     if (!loading && !user) {
       router.replace("/auth/login")
     }
-    if (!loading && user && user.role !== "consumer") {
-      if (user.role === "owner") router.replace("/roles/owner/dashboard")
+    if (!loading && user && user.role !== "owner") {
+      if (user.role === "consumer") router.replace("/dashboard")
       if (user.role === "staff") router.replace("/roles/staff/dashboard")
     }
   }, [user, loading, router])
@@ -32,7 +32,7 @@ export default function DashboardPage() {
     )
   }
 
-  if (!user || user.role !== "consumer") {
+  if (!user || user.role !== "owner") {
     return null
   }
 
@@ -40,7 +40,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main>
-        <ConsumerDashboard />
+        <OwnerDashboard />
       </main>
     </div>
   )

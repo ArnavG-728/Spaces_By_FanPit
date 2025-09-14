@@ -156,7 +156,7 @@ export function AddSpaceForm() {
         title: "Space Added Successfully!",
         description: `${created.name} has been created.`,
       })
-      router.push("/owner/dashboard")
+      router.push("/roles/owner/dashboard")
     } catch (err: any) {
       toast({
         title: "Failed to add space",

@@ -2,11 +2,11 @@
 
 import { useAuth } from "@/contexts/auth-context"
 import { Navbar } from "@/components/navbar"
-import { OwnerDashboard } from "@/components/owner/owner-dashboard"
+import { AllSpaces } from "../_components/all-spaces"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
-export default function OwnerDashboardPage() {
+export default function AllSpacesPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
 
@@ -14,9 +14,9 @@ export default function OwnerDashboardPage() {
     if (!loading && !user) {
       router.replace("/auth/login")
     }
-    if (!loading && user && user.role !== "owner") {
-      if (user.role === "consumer") router.replace("/dashboard")
-      if (user.role === "staff") router.replace("/staff/dashboard")
+    if (!loading && user && user.role !== "consumer") {
+      if (user.role === "owner") router.replace("/roles/owner/dashboard")
+      if (user.role === "staff") router.replace("/roles/staff/dashboard")
     }
   }, [user, loading, router])
 
@@ -32,7 +32,7 @@ export default function OwnerDashboardPage() {
     )
   }
 
-  if (!user || user.role !== "owner") {
+  if (!user || user.role !== "consumer") {
     return null
   }
 
@@ -40,7 +40,7 @@ export default function OwnerDashboardPage() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main>
-        <OwnerDashboard />
+        <AllSpaces />
       </main>
     </div>
   )

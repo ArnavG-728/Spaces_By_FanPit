@@ -13,13 +13,13 @@ export function Navbar() {
     if (!user) return "/auth/login"
     switch (user.role) {
       case "consumer":
-        return "/dashboard"
+        return "/roles/consumer/dashboard"
       case "owner":
-        return "/owner/dashboard"
+        return "/roles/owner/dashboard"
       case "staff":
-        return "/staff/dashboard"
+        return "/roles/staff/dashboard"
       default:
-        return "/dashboard"
+        return "/roles/consumer/dashboard"
     }
   }
 
