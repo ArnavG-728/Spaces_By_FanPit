@@ -1,17 +1,17 @@
-"use client"
+'use client'
 
-import { useAuth } from "@/contexts/auth-context"
-import { SignupForm } from "@/app/components/auth/forms/signup-form"
-import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { LoginForm } from "./login-form"
 import { Navbar } from "@/components/navbar"
+import { useAuth } from "@/contexts/auth-context"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 
-export default function SignupPage() {
+export default function LoginPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (!loading && user) {
+    if (user) {
       // Redirect to appropriate dashboard if already logged in
       switch (user.role) {
         case 'owner':
@@ -24,7 +24,7 @@ export default function SignupPage() {
           router.push('/dashboard')
       }
     }
-  }, [user, loading, router])
+  }, [user, router])
 
   if (loading || user) {
     return (
@@ -43,7 +43,7 @@ export default function SignupPage() {
       <Navbar />
       <main className="container mx-auto px-4 py-16">
         <div className="mx-auto max-w-md">
-          <SignupForm />
+          <LoginForm />
         </div>
       </main>
     </div>

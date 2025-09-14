@@ -15,7 +15,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Upload, X, Plus } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
-import { PricingEngine } from "@/components/spaces/pricing-engine"
+import { PricingEngine } from "@/app/components/spaces/_components/pricing-engine"
+import { api } from "@/lib/api/client"
 
 const amenityOptions = [
   "WiFi",
@@ -139,16 +140,31 @@ export function AddSpaceForm() {
     e.preventDefault()
     setIsSubmitting(true)
 
-    // Simulate API call
-    console.log('Submitting form data:', formData)
-    setTimeout(() => {
-      setIsSubmitting(false)
+    try {
+      // Minimal payload matching backend schema
+      const payload = {
+        name: formData.name,
+        description: formData.description,
+        capacity: Number(formData.capacity) || 0,
+        pricePerHour: Number(formData.pricing.basePrice) || 0,
+        amenities: formData.amenities,
+      }
+
+      const created = await api.createSpace(payload)
+
       toast({
         title: "Space Added Successfully!",
-        description: "Your space has been added and is now available for booking.",
+        description: `${created.name} has been created.`,
       })
       router.push("/owner/dashboard")
-    }, 2000)
+    } catch (err: any) {
+      toast({
+        title: "Failed to add space",
+        description: err?.message || "Something went wrong while creating the space.",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (

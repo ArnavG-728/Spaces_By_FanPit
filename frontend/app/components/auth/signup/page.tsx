@@ -1,10 +1,10 @@
-"use client"
+'use client'
 
-import { useAuth } from "@/contexts/auth-context"
 import { SignupForm } from "@/app/components/auth/forms/signup-form"
-import { useRouter } from "next/navigation"
-import { useEffect } from "react"
 import { Navbar } from "@/components/navbar"
+import { useAuth } from "@/contexts/auth-context"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 
 export default function SignupPage() {
   const { user, loading } = useAuth()

@@ -40,14 +40,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true)
     try {
       // Mock API call - replace with actual API
+      // For demo purposes, we'll set the role based on the email
+      const role: UserRole = email.includes('owner@') ? 'owner' : 
+                           email.includes('staff@') ? 'staff' : 'consumer';
+      
       const mockUser: User = {
         id: "1",
         email,
         name: email.split("@")[0],
-        role: "consumer", // This would come from API
-      }
-      setUser(mockUser)
-      localStorage.setItem("user", JSON.stringify(mockUser))
+        role, // This would come from API in a real app
+      };
+      
+      setUser(mockUser);
+      localStorage.setItem("user", JSON.stringify(mockUser));
     } catch (error) {
       throw new Error("Login failed")
     } finally {

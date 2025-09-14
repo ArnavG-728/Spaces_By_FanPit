@@ -1,5 +1,5 @@
 import { Navbar } from "@/components/navbar"
-import { SpaceDetails } from "@/components/spaces/space-details"
+import { SpaceDetails } from "../_components/space-details"
 
 export default function SpaceDetailPage({ params }: { params: { id: string } }) {
   return (

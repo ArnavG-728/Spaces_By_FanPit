@@ -1,91 +1,32 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Building2, Calendar, DollarSign, Plus, Eye, Edit, Trash2, TrendingUp } from "lucide-react"
+import { Building2, Calendar, DollarSign, Plus, Eye, Edit, Trash2, TrendingUp, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { api } from "@/lib/api/client"
+import { useToast } from "@/hooks/use-toast"
 
-// Mock data - replace with actual API calls
-const mockSpaces = [
-  {
-    id: "1",
-    name: "Modern Event Hall",
-    type: "Event Space",
-    location: "Downtown",
-    capacity: 200,
-    price: 150,
-    status: "active",
-    image: "/placeholder.svg?height=100&width=150",
-    bookings: 12,
-    revenue: 1800,
-    occupancy: 75,
-  },
-  {
-    id: "2",
-    name: "Creative Studio",
-    type: "Co-working",
-    location: "Arts District",
-    capacity: 50,
-    price: 25,
-    status: "active",
-    image: "/placeholder.svg?height=100&width=150",
-    bookings: 28,
-    revenue: 700,
-    occupancy: 85,
-  },
-  {
-    id: "3",
-    name: "Rooftop Terrace",
-    type: "Event Space",
-    location: "City Center",
-    capacity: 80,
-    price: 100,
-    status: "inactive",
-    image: "/placeholder.svg?height=100&width=150",
-    bookings: 0,
-    revenue: 0,
-    occupancy: 0,
-  },
-]
+interface SpaceWithStats {
+  _id: string
+  name: string
+  description: string
+  capacity: number
+  pricePerHour: number
+  amenities: string[]
+  status: 'active' | 'inactive'
+  // Mock stats - replace with real data when available
+  bookings: number
+  revenue: number
+  occupancy: number
+}
 
-const mockBookings = [
-  {
-    id: "1",
-    spaceName: "Modern Event Hall",
-    customerName: "John Smith",
-    date: "2024-12-20",
-    time: "14:00 - 18:00",
-    status: "confirmed",
-    amount: 660,
-    guests: 150,
-  },
-  {
-    id: "2",
-    spaceName: "Creative Studio",
-    customerName: "Sarah Johnson",
-    date: "2024-12-18",
-    time: "09:00 - 17:00",
-    status: "completed",
-    amount: 220,
-    guests: 25,
-  },
-  {
-    id: "3",
-    spaceName: "Modern Event Hall",
-    customerName: "Mike Chen",
-    date: "2024-12-25",
-    time: "19:00 - 23:00",
-    status: "pending",
-    amount: 440,
-    guests: 100,
-  },
-]
 
-const getStatusColor = (status: string) => {
+const getStatusColor = (status: 'active' | 'inactive' | 'confirmed' | 'pending' | 'completed' | 'cancelled') => {
   switch (status) {
     case "active":
       return "bg-green-100 text-green-800"
@@ -106,12 +47,60 @@ const getStatusColor = (status: string) => {
 
 export function OwnerDashboard() {
   const { user } = useAuth()
+  const { toast } = useToast()
   const [activeTab, setActiveTab] = useState("overview")
+  const [spaces, setSpaces] = useState<SpaceWithStats[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const totalRevenue = mockSpaces.reduce((sum, space) => sum + space.revenue, 0)
-  const totalBookings = mockSpaces.reduce((sum, space) => sum + space.bookings, 0)
-  const activeSpaces = mockSpaces.filter((space) => space.status === "active").length
-  const avgOccupancy = Math.round(mockSpaces.reduce((sum, space) => sum + space.occupancy, 0) / mockSpaces.length)
+  useEffect(() => {
+    const fetchSpaces = async () => {
+      try {
+        setIsLoading(true)
+        const data = await api.listSpaces()
+        
+        // Map API data to include mock stats (replace with real stats when available)
+        const spacesWithStats: SpaceWithStats[] = data.map(space => ({
+          ...space,
+          _id: space._id || '',
+          status: 'active' as const, // Default to active, update based on your business logic
+          bookings: Math.floor(Math.random() * 100), // Mock data
+          revenue: Math.floor(Math.random() * 10000), // Mock data
+          occupancy: Math.floor(Math.random() * 100), // Mock data
+        }))
+        
+        setSpaces(spacesWithStats)
+      } catch (err) {
+        console.error('Failed to fetch spaces:', err)
+        setError('Failed to load spaces. Please try again.')
+        toast({
+          title: "Error",
+          description: "Failed to load spaces. Please try again.",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchSpaces()
+  }, [toast])
+
+  const totalRevenue = spaces.reduce((sum, space) => sum + space.revenue, 0)
+  const totalBookings = spaces.reduce((sum, space) => sum + space.bookings, 0)
+  const activeSpaces = spaces.filter((space) => space.status === "active").length
+  const avgOccupancy = spaces.length > 0 
+    ? Math.round(spaces.reduce((sum, space) => sum + space.occupancy, 0) / spaces.length)
+    : 0
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading spaces...</span>
+      </div>
+    )
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -160,7 +149,7 @@ export function OwnerDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{activeSpaces}</div>
-                <p className="text-xs text-muted-foreground">Out of {mockSpaces.length} total</p>
+                <p className="text-xs text-muted-foreground">Out of {spaces.length} total</p>
               </CardContent>
             </Card>
 
@@ -183,19 +172,21 @@ export function OwnerDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {mockBookings.slice(0, 5).map((booking) => (
-                  <div key={booking.id} className="flex items-center justify-between p-4 border rounded-lg">
+                {spaces.length === 0 ? (
+                  <p className="text-center py-4 text-muted-foreground">No spaces found. Add your first space to get started.</p>
+                ) : spaces.slice(0, 3).map((space) => (
+                  <div key={space._id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
-                      <h4 className="font-semibold">{booking.spaceName}</h4>
+                      <h4 className="font-semibold">{space.name}</h4>
                       <p className="text-sm text-muted-foreground">
-                        {booking.customerName} • {booking.date} • {booking.time}
+                        Up to {space.capacity} guests • ${space.pricePerHour}/hour
                       </p>
-                      <p className="text-sm text-muted-foreground">{booking.guests} guests</p>
+                      <p className="text-sm text-muted-foreground">{space.bookings} total bookings</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold">${booking.amount}</p>
-                      <Badge className={getStatusColor(booking.status)}>
-                        {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                      <p className="font-semibold">${space.revenue} total</p>
+                      <Badge className={getStatusColor(space.status)}>
+                        {space.status.charAt(0).toUpperCase() + space.status.slice(1)}
                       </Badge>
                     </div>
                   </div>
@@ -217,11 +208,13 @@ export function OwnerDashboard() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {mockSpaces.map((space) => (
-              <Card key={space.id}>
+            {spaces.map((space) => (
+              <Card key={space._id}>
                 <div className="relative">
-                  <img src={space.image || "/placeholder.svg"} alt={space.name} className="w-full h-48 object-cover" />
-                  <Badge className={`absolute top-3 left-3 ${getStatusColor(space.status)}`}>{space.status}</Badge>
+                  <img src={"/placeholder.svg"} alt={space.name} className="w-full h-48 object-cover" />
+                  <Badge className={`absolute top-3 left-3 ${getStatusColor(space.status)}`}>
+                    {space.status.charAt(0).toUpperCase() + space.status.slice(1)}
+                  </Badge>
                 </div>
 
                 <CardHeader className="pb-3">
@@ -229,7 +222,7 @@ export function OwnerDashboard() {
                     <div>
                       <h3 className="text-lg font-semibold text-balance">{space.name}</h3>
                       <p className="text-sm text-muted-foreground">
-                        {space.type} • {space.location}
+                        {space.amenities[0] || 'Space'} • {space.amenities[1] || 'Flexible'}
                       </p>
                       <p className="text-sm text-muted-foreground">Up to {space.capacity} guests</p>
                     </div>
@@ -243,7 +236,7 @@ export function OwnerDashboard() {
                       <p className="text-xs text-muted-foreground">Bookings</p>
                     </div>
                     <div>
-                      <p className="text-lg font-semibold">${space.revenue}</p>
+                      <p className="text-lg font-semibold">${space.pricePerHour}<span className="text-sm font-normal text-muted-foreground">/hour</span></p>
                       <p className="text-xs text-muted-foreground">Revenue</p>
                     </div>
                     <div>
@@ -253,13 +246,13 @@ export function OwnerDashboard() {
                   </div>
 
                   <div className="flex gap-2">
-                    <Link href={`/spaces/${space.id}`} className="flex-1">
+                    <Link href={`/spaces/${space._id}`} className="flex-1">
                       <Button variant="outline" size="sm" className="w-full bg-transparent">
                         <Eye className="mr-2 h-4 w-4" />
                         View
                       </Button>
                     </Link>
-                    <Link href={`/owner/spaces/${space.id}/edit`} className="flex-1">
+                    <Link href={`/owner/spaces/${space._id}/edit`} className="flex-1">
                       <Button variant="outline" size="sm" className="w-full bg-transparent">
                         <Edit className="mr-2 h-4 w-4" />
                         Edit
@@ -304,21 +297,27 @@ export function OwnerDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {mockBookings.map((booking) => (
-                      <tr key={booking.id} className="border-b">
-                        <td className="p-4 font-medium">{booking.spaceName}</td>
-                        <td className="p-4">{booking.customerName}</td>
+                    {spaces.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="p-4 text-center text-muted-foreground">
+                          No bookings found. Bookings will appear here when available.
+                        </td>
+                      </tr>
+                    ) : spaces.slice(0, 5).map((space) => (
+                      <tr key={space._id} className="border-b">
+                        <td className="p-4 font-medium">{space.name}</td>
+                        <td className="p-4">Sample Customer</td>
                         <td className="p-4">
                           <div>
-                            <p>{booking.date}</p>
-                            <p className="text-sm text-muted-foreground">{booking.time}</p>
+                            <p>{new Date().toLocaleDateString()}</p>
+                            <p className="text-sm text-muted-foreground">12:00 - 14:00</p>
                           </div>
                         </td>
-                        <td className="p-4">{booking.guests}</td>
-                        <td className="p-4 font-semibold">${booking.amount}</td>
+                        <td className="p-4">{Math.floor(space.capacity * 0.7)}</td>
+                        <td className="p-4 font-semibold">${space.pricePerHour * 2}</td>
                         <td className="p-4">
-                          <Badge className={getStatusColor(booking.status)}>
-                            {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                          <Badge className={getStatusColor('confirmed')}>
+                            Confirmed
                           </Badge>
                         </td>
                         <td className="p-4">
@@ -326,11 +325,12 @@ export function OwnerDashboard() {
                             <Button variant="outline" size="sm">
                               View
                             </Button>
-                            {booking.status === "pending" && <Button size="sm">Confirm</Button>}
+                            <Button size="sm" variant="outline">View Details</Button>
                           </div>
                         </td>
                       </tr>
-                    ))}
+                    ))
+                    }
                   </tbody>
                 </table>
               </div>
@@ -370,8 +370,8 @@ export function OwnerDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {mockSpaces.map((space) => (
-                    <div key={space.id} className="flex items-center justify-between">
+                  {spaces.map((space) => (
+                    <div key={space._id} className="flex items-center justify-between">
                       <div>
                         <p className="font-medium">{space.name}</p>
                         <p className="text-sm text-muted-foreground">{space.bookings} bookings</p>

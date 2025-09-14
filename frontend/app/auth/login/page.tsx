@@ -1,13 +1,51 @@
-import { LoginForm } from "@/components/auth/login-form"
+'use client'
+
+import { useAuth } from "@/contexts/auth-context"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 import { Navbar } from "@/components/navbar"
+import { LoginForm } from "@/app/components/auth/forms/login-form"
 
 export default function LoginPage() {
+  const { user, loading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (user) {
+      // Redirect to appropriate dashboard if already logged in
+      switch (user.role) {
+        case 'owner':
+          router.push('/owner/dashboard')
+          break
+        case 'staff':
+          router.push('/staff/dashboard')
+          break
+        default:
+          router.push('/dashboard')
+      }
+    }
+  }, [user, router])
+
+  if (loading || user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-16 text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="container mx-auto px-4 py-16">
-        <LoginForm />
-      </div>
+      <main className="container mx-auto px-4 py-16">
+        <div className="mx-auto max-w-md">
+          <LoginForm />
+        </div>
+      </main>
     </div>
   )
 }

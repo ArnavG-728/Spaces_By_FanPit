@@ -2,18 +2,23 @@
 
 import { useAuth } from "@/contexts/auth-context"
 import { Navbar } from "@/components/navbar"
-import { CheckoutFlow } from "@/components/checkout/checkout-flow"
-import { redirect } from "next/navigation"
+import { StaffDashboard } from "../_components/staff-dashboard"
+import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
-export default function CheckoutPage() {
+export default function StaffDashboardPage() {
   const { user, loading } = useAuth()
+  const router = useRouter()
 
   useEffect(() => {
     if (!loading && !user) {
-      redirect("/auth/login")
+      router.replace("/auth/login")
     }
-  }, [user, loading])
+    if (!loading && user && user.role !== "staff") {
+      if (user.role === "consumer") router.replace("/dashboard")
+      if (user.role === "owner") router.replace("/owner/dashboard")
+    }
+  }, [user, loading, router])
 
   if (loading) {
     return (
@@ -27,7 +32,7 @@ export default function CheckoutPage() {
     )
   }
 
-  if (!user) {
+  if (!user || user.role !== "staff") {
     return null
   }
 
@@ -35,7 +40,7 @@ export default function CheckoutPage() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main>
-        <CheckoutFlow />
+        <StaffDashboard />
       </main>
     </div>
   )

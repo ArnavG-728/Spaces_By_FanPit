@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/contexts/auth-context"
 import { Navbar } from "@/components/navbar"
-import { ConsumerDashboard } from "@/components/dashboard/consumer-dashboard"
+import { ConsumerDashboard } from "./_components/consumer-dashboard"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
