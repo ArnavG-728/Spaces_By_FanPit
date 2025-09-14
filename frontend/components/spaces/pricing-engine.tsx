@@ -218,7 +218,7 @@ export function PricingEngine({ pricing, onChange }: PricingEngineProps) {
 
           <TabsContent value="hourly" className="space-y-4">
             <div className="space-y-2">
-              <Label>Base Hourly Rate</Label>
+              <Label>Base Hourly Rate *</Label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
                   <Select value={currency} onValueChange={(v) => setCurrency(v as any)}>
@@ -246,7 +246,7 @@ export function PricingEngine({ pricing, onChange }: PricingEngineProps) {
 
           <TabsContent value="daily" className="space-y-4">
             <div className="space-y-2">
-              <Label>Daily Rate</Label>
+              <Label>Daily Rate *</Label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
                   <Select value={currency} onValueChange={(v) => setCurrency(v as any)}>
@@ -274,7 +274,7 @@ export function PricingEngine({ pricing, onChange }: PricingEngineProps) {
 
           <TabsContent value="monthly" className="space-y-4">
             <div className="space-y-2">
-              <Label>Monthly Rate</Label>
+              <Label>Monthly Rate *</Label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
                   <Select value={currency} onValueChange={(v) => setCurrency(v as any)}>
@@ -302,7 +302,7 @@ export function PricingEngine({ pricing, onChange }: PricingEngineProps) {
 
           <TabsContent value="peak_off_peak" className="space-y-4">
             <div className="space-y-2">
-              <Label>Base Price</Label>
+              <Label>Base Price *</Label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
                   <Select value={currency} onValueChange={(v) => setCurrency(v as any)}>
@@ -373,7 +373,7 @@ export function PricingEngine({ pricing, onChange }: PricingEngineProps) {
                       />
                     </div>
                     <div className="col-span-4">
-                      <Label>Multiplier</Label>
+                      <Label>Multiplier *</Label>
                       <div className="relative">
                         <Input 
                           type="number" 
@@ -386,7 +386,6 @@ export function PricingEngine({ pricing, onChange }: PricingEngineProps) {
                           min={1}
                           step={0.1}
                         />
-                        <span className="absolute right-3 top-2.5 text-muted-foreground">x</span>
                       </div>
                     </div>
                     <div className="col-span-2 flex items-end h-8">
@@ -466,7 +465,7 @@ export function PricingEngine({ pricing, onChange }: PricingEngineProps) {
                       />
                     </div>
                     <div>
-                      <Label>Price</Label>
+                      <Label>Price *</Label>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
                           <Select value={currency} onValueChange={(v) => setCurrency(v as any)}>
@@ -551,7 +550,7 @@ export function PricingEngine({ pricing, onChange }: PricingEngineProps) {
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label>Discount Type</Label>
+                      <Label>Discount Type *</Label>
                       <select 
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         value={promo.discountType}
@@ -568,7 +567,7 @@ export function PricingEngine({ pricing, onChange }: PricingEngineProps) {
                       </select>
                     </div>
                     <div>
-                      <Label>Value</Label>
+                      <Label>Value *</Label>
                       {promo.discountType === 'fixed' ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           <div>
@@ -619,7 +618,7 @@ export function PricingEngine({ pricing, onChange }: PricingEngineProps) {
                       )}
                     </div>
                     <div>
-                      <Label>Valid Until</Label>
+                      <Label>Valid Until *</Label>
                       <Input 
                         type="date" 
                         value={promo.validUntil}
