@@ -9,12 +9,18 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT') || 3001;
 
+  // Configure CORS with environment variables
+  const allowedOrigins = [
+    configService.get<string>('FRONTEND_URL'),
+  ].filter(Boolean);
+
+  // Only add localhost in development
+  if (process.env.NODE_ENV !== 'production') {
+    allowedOrigins.push('http://localhost:3000', 'https://localhost:3000');
+  }
+
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'https://localhost:3000',
-      configService.get<string>('FRONTEND_URL') || 'http://localhost:3000'
-    ],
+    origin: allowedOrigins,
     credentials: true,
   });
   app.setGlobalPrefix('api');
