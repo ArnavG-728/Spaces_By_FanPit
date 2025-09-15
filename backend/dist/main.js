@@ -9,7 +9,16 @@ async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     const configService = app.get(config_1.ConfigService);
     const port = configService.get('PORT') || 3001;
-    app.enableCors();
+    const allowedOrigins = [
+        configService.get('FRONTEND_URL'),
+    ].filter(Boolean);
+    if (process.env.NODE_ENV !== 'production') {
+        allowedOrigins.push('http://localhost:3000', 'https://localhost:3000');
+    }
+    app.enableCors({
+        origin: allowedOrigins,
+        credentials: true,
+    });
     app.setGlobalPrefix('api');
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,

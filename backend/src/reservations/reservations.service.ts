@@ -12,17 +12,22 @@ import { SpacesService } from '../spaces/spaces.service';
 
 @Injectable()
 export class ReservationsService {
-  private razorpay: Razorpay;
+  private razorpay?: Razorpay; // Make Razorpay optional
 
   constructor(
     @InjectModel(Reservation.name) private readonly reservationModel: Model<ReservationDocument>,
     private readonly spacesService: SpacesService,
     private readonly configService: ConfigService,
   ) {
-    this.razorpay = new Razorpay({
-      key_id: this.configService.get<string>('RAZORPAY_KEY_ID'),
-      key_secret: this.configService.get<string>('RAZORPAY_KEY_SECRET'),
-    });
+    const keyId = this.configService.get<string>('RAZORPAY_KEY_ID');
+    const keySecret = this.configService.get<string>('RAZORPAY_KEY_SECRET');
+
+    if (keyId && keySecret) {
+      this.razorpay = new Razorpay({
+        key_id: keyId,
+        key_secret: keySecret,
+      });
+    }
   }
 
   async create(createReservationDto: CreateReservationDto): Promise<Reservation> {
@@ -56,6 +61,9 @@ export class ReservationsService {
     const totalPrice = durationHours * (space.pricing.hourlyRate || 500); // Default price if not set
 
     // 4. Create Razorpay Order
+    if (!this.razorpay) {
+      throw new BadRequestException('Payment gateway is not configured.');
+    }
     const order = await this.razorpay.orders.create({
       amount: totalPrice * 100, // Amount in paise
       currency: 'INR',

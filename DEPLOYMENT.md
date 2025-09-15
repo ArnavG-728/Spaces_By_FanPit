@@ -11,16 +11,26 @@ This guide covers deploying the Spaces by FanPit application with the backend on
 
 ## Backend Deployment (Render)
 
-### 1. Environment Variables Setup
+### 1. Environment Variables
 
-In your Render dashboard, set the following environment variables:
+Set these environment variables in your Render dashboard:
 
 ```
+MONGODB_URI=your_mongodb_atlas_connection_string
+JWT_SECRET=your_jwt_secret_change_in_production
 NODE_ENV=production
-PORT=10000
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/spaces_by_fanpit
-JWT_SECRET=your_super_secure_jwt_secret_here
-FRONTEND_URL=https://your-vercel-app.vercel.app
+PORT=3001
+FRONTEND_URL=https://spaces-by-fan-pit-htdn.vercel.app
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_app_password
+```
+
+Optional (leave empty to disable Razorpay):
+```
+RAZORPAY_KEY_ID=
+RAZORPAY_KEY_SECRET=
 ```
 
 ### 2. Deploy to Render
@@ -43,7 +53,13 @@ The `render.yaml` file is already configured for automatic deployment.
 In your Vercel dashboard, set the following environment variables:
 
 ```
-NEXT_PUBLIC_API_BASE=https://your-render-app.onrender.com/api
+NEXT_PUBLIC_API_BASE=https://spaces-by-fanpit-x3kc.onrender.com/api
+NODE_ENV=production
+```
+
+Optional (if using Razorpay):
+```
+NEXT_PUBLIC_RAZORPAY_KEY_ID=your_razorpay_public_key
 ```
 
 ### 2. Deploy to Vercel
