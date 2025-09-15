@@ -28,6 +28,7 @@ FRONTEND_URL=https://your-vercel-app.vercel.app
 1. Connect your GitHub repository to Render
 2. Create a new Web Service
 3. Use the following settings:
+   - **Root Directory**: `./backend`
    - **Build Command**: `npm install && npm run build`
    - **Start Command**: `npm run start:prod`
    - **Environment**: Node
@@ -49,8 +50,14 @@ NEXT_PUBLIC_API_BASE=https://your-render-app.onrender.com/api
 
 1. Connect your GitHub repository to Vercel
 2. Import your project
-3. Vercel will automatically detect it's a Next.js project
-4. Deploy!
+3. Use the following settings:
+   - **Root Directory**: `./frontend`
+   - **Framework Preset**: Next.js
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `.next`
+4. In Environment Variables section, add:
+   - `NEXT_PUBLIC_API_BASE` = `https://your-render-app.onrender.com/api`
+5. Deploy!
 
 The `vercel.json` file is already configured for optimal deployment.
 
