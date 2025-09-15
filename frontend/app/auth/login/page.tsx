@@ -2,9 +2,9 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/auth-context';
-import { Navbar } from "@/components/navbar";
-import { LoginForm } from "@/app/components/auth/forms/login-form";
+import { useAuth } from '../../../contexts/auth-context';
+import { Navbar } from "../../../components/navbar";
+import { LoginForm } from "../../components/auth/forms/login-form";
 
 export default function LoginPage() {
   const { user, loading } = useAuth();

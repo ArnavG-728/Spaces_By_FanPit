@@ -2,9 +2,9 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/auth-context';
-import { SignupForm } from "@/app/components/auth/forms/signup-form";
-import { Navbar } from "@/components/navbar";
+import { useAuth } from '../../../contexts/auth-context';
+import { SignupForm } from "../../components/auth/forms/signup-form";
+import { Navbar } from "../../../components/navbar";
 
 export default function SignupPage() {
   const { user, loading } = useAuth();

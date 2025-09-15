@@ -10,7 +10,7 @@ import { TransactionLog, TransactionLogDocument, TransactionStatus } from './sch
 
 @Injectable()
 export class PaymentsService {
-  private readonly webhookSecret?: string;
+  private readonly webhookSecret: string;
 
   constructor(
     @InjectModel(TransactionLog.name) private readonly transactionLogModel: Model<TransactionLogDocument>,
@@ -18,7 +18,11 @@ export class PaymentsService {
         private readonly configService: ConfigService,
     private readonly notificationsService: NotificationsService,
   ) {
-        this.webhookSecret = this.configService.get<string>('RAZORPAY_KEY_SECRET');
+        const secret = this.configService.get<string>('RAZORPAY_KEY_SECRET');
+    if (!secret) {
+      throw new Error('RAZORPAY_KEY_SECRET is not defined in environment variables.');
+    }
+    this.webhookSecret = secret;
   }
 
   async handleWebhook(event: any, signature: string) {
@@ -54,9 +58,6 @@ export class PaymentsService {
   }
 
   private verifySignature(body: string, signature: string): boolean {
-    if (!this.webhookSecret) {
-      throw new BadRequestException('Webhook secret is not configured.');
-    }
     const hmac = crypto.createHmac('sha256', this.webhookSecret);
     hmac.update(body);
     const generatedSignature = hmac.digest('hex');
