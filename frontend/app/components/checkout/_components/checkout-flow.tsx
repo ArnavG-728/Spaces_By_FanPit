@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,19 +14,15 @@ import { PaymentMethods } from "./payment-methods"
 import { CalendarIcon, MapPin, Users, Clock, CheckCircle } from "lucide-react"
 import { format } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
+import { useAuth } from "@/contexts/auth-context"
+import { spacesAPI, reservationsAPI, Space } from "@/lib/api"
 
-// Mock space data - would come from URL params or state
-const mockSpace = {
-  id: "1",
-  name: "Modern Event Hall",
-  location: "Downtown",
-  capacity: 200,
-  price: 150,
-  image: "/placeholder.svg?height=200&width=300",
-}
 
 export function CheckoutFlow() {
+  const { id } = useParams<{ id: string }>()
+  const { user } = useAuth()
+  const [space, setSpace] = useState<Space | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date>()
   const [startTime, setStartTime] = useState("")
   const [endTime, setEndTime] = useState("")
@@ -39,12 +35,18 @@ export function CheckoutFlow() {
   const { toast } = useToast()
   const router = useRouter()
 
+  useEffect(() => {
+    if (id) {
+      spacesAPI.getById(id).then(setSpace).catch(console.error)
+    }
+  }, [id])
+
   const calculateTotal = () => {
     if (!startTime || !endTime) return { hours: 0, subtotal: 0, serviceFee: 0, tax: 0, total: 0 }
     const start = Number.parseInt(startTime.split(":")[0])
     const end = Number.parseInt(endTime.split(":")[0])
     const hours = end - start
-    const subtotal = hours * mockSpace.price
+    const subtotal = hours * (space?.pricing.hourlyRate || 0)
     const serviceFee = Math.round(subtotal * 0.1)
     const tax = Math.round(subtotal * 0.08)
     return {
@@ -70,32 +72,31 @@ export function CheckoutFlow() {
 
     setIsProcessing(true)
 
-    // Simulate payment processing
-    setTimeout(() => {
-      const booking = {
-        id: "BK" + Math.random().toString(36).substr(2, 9),
-        bookingCode: "SB" + Math.random().toString(36).substr(2, 6).toUpperCase(),
-        space: mockSpace,
-        date: selectedDate,
-        startTime,
-        endTime,
-        guests: guestCount,
-        specialRequests,
-        payment: paymentData,
-        total: pricing.total,
-        status: "confirmed",
-        createdAt: new Date(),
-      }
+        try {
+            const booking = await reservationsAPI.create({
+        spaceId: space!._id,
+        userId: user!._id,
+        startTime: new Date(`${format(selectedDate, 'yyyy-MM-dd')}T${startTime}`).toISOString(),
+        endTime: new Date(`${format(selectedDate, 'yyyy-MM-dd')}T${endTime}`).toISOString(),
+      });
 
-      setBookingDetails(booking)
-      setBookingComplete(true)
-      setIsProcessing(false)
+      setBookingDetails(booking);
+      setBookingComplete(true);
 
       toast({
         title: "Payment Successful!",
         description: "Your booking has been confirmed. Check your email for details.",
-      })
-    }, 3000)
+      });
+        } catch (error) {
+      console.error("Payment failed:", error);
+      toast({
+        title: "Payment Failed",
+        description: "Could not process your payment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   }
 
   if (bookingComplete && bookingDetails) {
@@ -201,23 +202,23 @@ export function CheckoutFlow() {
               <CardContent>
                 <div className="flex gap-4">
                   <img
-                    src={mockSpace.image || "/placeholder.svg"}
-                    alt={mockSpace.name}
+                    src={space?.images?.[0] || "/placeholder.svg"}
+                    alt={space?.name}
                     className="w-24 h-24 object-cover rounded-lg"
                   />
                   <div>
-                    <h3 className="text-lg font-semibold">{mockSpace.name}</h3>
+                    <h3 className="text-lg font-semibold">{space?.name}</h3>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                       <div className="flex items-center gap-1">
                         <MapPin className="h-4 w-4" />
-                        {mockSpace.location}
+                        {space?.address}
                       </div>
                       <div className="flex items-center gap-1">
                         <Users className="h-4 w-4" />
-                        Up to {mockSpace.capacity}
+                        Up to {space?.capacity}
                       </div>
                     </div>
-                    <p className="text-lg font-semibold mt-2">${mockSpace.price}/hour</p>
+                    <p className="text-lg font-semibold mt-2">${space?.pricing.hourlyRate}/hour</p>
                   </div>
                 </div>
               </CardContent>
@@ -303,7 +304,7 @@ export function CheckoutFlow() {
                     placeholder="Enter number of guests"
                     value={guestCount}
                     onChange={(e) => setGuestCount(e.target.value)}
-                    max={mockSpace.capacity}
+                    max={space?.capacity}
                   />
                 </div>
 
@@ -365,7 +366,7 @@ export function CheckoutFlow() {
                   <>
                     <div className="flex justify-between text-sm">
                       <span>
-                        ${mockSpace.price} x {pricing.hours} hours
+                        ${space?.pricing.hourlyRate || 0} x {pricing.hours} hours
                       </span>
                       <span>${pricing.subtotal}</span>
                     </div>

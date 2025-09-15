@@ -3,21 +3,29 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const core_1 = require("@nestjs/core");
 const app_module_1 = require("./app.module");
 const common_1 = require("@nestjs/common");
+const config_1 = require("@nestjs/config");
 const swagger_1 = require("@nestjs/swagger");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    const configService = app.get(config_1.ConfigService);
+    const port = configService.get('PORT') || 3001;
+    app.enableCors();
     app.setGlobalPrefix('api');
-    app.enableCors({ origin: 'http://localhost:3000', credentials: true });
-    app.useGlobalPipes(new common_1.ValidationPipe());
+    app.useGlobalPipes(new common_1.ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+    }));
     const config = new swagger_1.DocumentBuilder()
-        .setTitle('Spaces By FanPit API')
-        .setDescription('REST API for users, spaces, bookings, check-ins, and issues')
-        .setVersion('1.0.0')
+        .setTitle('Spaces by FanPit API')
+        .setDescription('API documentation for the Spaces by FanPit application')
+        .setVersion('1.0')
         .addBearerAuth()
         .build();
     const document = swagger_1.SwaggerModule.createDocument(app, config);
-    swagger_1.SwaggerModule.setup('docs', app, document);
-    await app.listen(process.env.PORT || 3001);
+    swagger_1.SwaggerModule.setup('api/docs', app, document);
+    await app.listen(port);
+    console.log(`Application is running on: ${await app.getUrl()}/api/docs`);
 }
 bootstrap();
 //# sourceMappingURL=main.js.map

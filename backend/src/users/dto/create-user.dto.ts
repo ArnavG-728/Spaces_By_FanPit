@@ -1,4 +1,5 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsString, IsEmail, IsNotEmpty, MinLength, IsEnum, IsOptional } from 'class-validator';
+import { UserRole } from '../schemas/user.schema';
 
 export class CreateUserDto {
   @IsString()
@@ -10,10 +11,11 @@ export class CreateUserDto {
   email: string;
 
   @IsString()
-  @MinLength(8)
   @IsNotEmpty()
+  @MinLength(8, { message: 'Password must be at least 8 characters long' })
   password: string;
 
-  @IsEnum(['consumer', 'owner', 'staff'])
-  role: 'consumer' | 'owner' | 'staff';
+  @IsEnum(UserRole)
+  @IsOptional()
+  role?: UserRole;
 }

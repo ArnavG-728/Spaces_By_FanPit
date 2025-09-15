@@ -25,3 +25,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# logs and cache
+.eslintcache
+.cache/
+.parcel-cache/
+.turbo/
+coverage/
+
+# editor/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# optional: keep a template env tracked
+!.env.example

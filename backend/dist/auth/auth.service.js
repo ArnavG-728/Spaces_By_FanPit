@@ -44,9 +44,9 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
-const users_service_1 = require("../users/users.service");
 const jwt_1 = require("@nestjs/jwt");
-const bcrypt = __importStar(require("bcryptjs"));
+const users_service_1 = require("../users/users.service");
+const bcrypt = __importStar(require("bcrypt"));
 let AuthService = class AuthService {
     usersService;
     jwtService;
@@ -54,31 +54,32 @@ let AuthService = class AuthService {
         this.usersService = usersService;
         this.jwtService = jwtService;
     }
+    async signup(createUserDto) {
+        const { email } = createUserDto;
+        const existingUser = await this.usersService.findByEmail(email);
+        if (existingUser) {
+            throw new common_1.ConflictException('Email already registered');
+        }
+        const user = await this.usersService.create(createUserDto);
+        const payload = { email: user.email, sub: user._id };
+        const token = this.jwtService.sign(payload);
+        const userObject = user.toObject();
+        delete userObject.password;
+        return { user: userObject, token };
+    }
     async validateUser(email, pass) {
         const user = await this.usersService.findByEmail(email);
         if (user && (await bcrypt.compare(pass, user.password))) {
-            const { password, ...result } = user;
+            const { password, ...result } = user.toObject();
             return result;
         }
         return null;
     }
     async login(user) {
-        const payload = { email: user.email, sub: user._id, role: user.role };
+        const payload = { email: user.email, sub: user._id };
         return {
-            access_token: this.jwtService.sign(payload),
-        };
-    }
-    async signup(createUserDto) {
-        const existingUser = await this.usersService.findByEmail(createUserDto.email);
-        if (existingUser) {
-            throw new common_1.UnauthorizedException('User already exists');
-        }
-        const user = await this.usersService.create(createUserDto);
-        const userObj = user;
-        const { password, ...result } = userObj;
-        return {
-            message: 'User created successfully',
-            user: result
+            user,
+            token: this.jwtService.sign(payload),
         };
     }
 };

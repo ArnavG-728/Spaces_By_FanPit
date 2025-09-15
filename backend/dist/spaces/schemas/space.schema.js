@@ -11,51 +11,45 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SpaceSchema = exports.Space = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
-const mongoose_2 = require("mongoose");
-const user_schema_1 = require("../../users/schemas/user.schema");
+const pricing_schema_1 = require("./pricing.schema");
 let Space = class Space {
     name;
     description;
-    location;
-    price;
-    owner;
-    amenities;
+    address;
     capacity;
+    amenities;
     images;
+    pricing;
 };
 exports.Space = Space;
 __decorate([
-    (0, mongoose_1.Prop)({ required: true }),
+    (0, mongoose_1.Prop)({ required: true, trim: true }),
     __metadata("design:type", String)
 ], Space.prototype, "name", void 0);
 __decorate([
-    (0, mongoose_1.Prop)(),
+    (0, mongoose_1.Prop)({ required: true, trim: true }),
     __metadata("design:type", String)
 ], Space.prototype, "description", void 0);
 __decorate([
-    (0, mongoose_1.Prop)(),
+    (0, mongoose_1.Prop)({ required: true, trim: true }),
     __metadata("design:type", String)
-], Space.prototype, "location", void 0);
+], Space.prototype, "address", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: true }),
     __metadata("design:type", Number)
-], Space.prototype, "price", void 0);
+], Space.prototype, "capacity", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ type: mongoose_2.Schema.Types.ObjectId, ref: 'User', required: true }),
-    __metadata("design:type", user_schema_1.User)
-], Space.prototype, "owner", void 0);
-__decorate([
-    (0, mongoose_1.Prop)([String]),
+    (0, mongoose_1.Prop)({ type: [String], default: [] }),
     __metadata("design:type", Array)
 ], Space.prototype, "amenities", void 0);
 __decorate([
-    (0, mongoose_1.Prop)(),
-    __metadata("design:type", Number)
-], Space.prototype, "capacity", void 0);
-__decorate([
-    (0, mongoose_1.Prop)([String]),
+    (0, mongoose_1.Prop)({ type: [String], default: [] }),
     __metadata("design:type", Array)
 ], Space.prototype, "images", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: pricing_schema_1.PricingSchema, default: () => ({}) }),
+    __metadata("design:type", pricing_schema_1.Pricing)
+], Space.prototype, "pricing", void 0);
 exports.Space = Space = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], Space);

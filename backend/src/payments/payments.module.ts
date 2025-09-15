@@ -1,15 +1,18 @@
 import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { ReservationsModule } from '../reservations/reservations.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { TransactionLog, TransactionLogSchema } from './schemas/transaction-log.schema';
 import { PaymentsService } from './payments.service';
 import { PaymentsController } from './payments.controller';
-import { MongooseModule } from '@nestjs/mongoose';
-import { Booking, BookingSchema } from '../bookings/schemas/booking.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Booking.name, schema: BookingSchema }])
+    MongooseModule.forFeature([{ name: TransactionLog.name, schema: TransactionLogSchema }]),
+        ReservationsModule,
+    NotificationsModule,
   ],
   controllers: [PaymentsController],
   providers: [PaymentsService],
-  exports: [PaymentsService],
 })
 export class PaymentsModule {}

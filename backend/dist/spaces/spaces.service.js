@@ -23,32 +23,34 @@ let SpacesService = class SpacesService {
         this.spaceModel = spaceModel;
     }
     async create(createSpaceDto) {
-        const createdSpace = new this.spaceModel(createSpaceDto);
-        return createdSpace.save();
+        const newSpace = new this.spaceModel(createSpaceDto);
+        return newSpace.save();
     }
     async findAll() {
-        return this.spaceModel.find().populate('owner').exec();
+        return this.spaceModel.find().exec();
     }
     async findOne(id) {
-        const space = await this.spaceModel.findById(id).populate('owner').exec();
+        const space = await this.spaceModel.findById(id).exec();
         if (!space) {
             throw new common_1.NotFoundException(`Space with ID "${id}" not found`);
         }
         return space;
     }
     async update(id, updateSpaceDto) {
-        const existingSpace = await this.spaceModel.findByIdAndUpdate(id, updateSpaceDto, { new: true }).exec();
+        const existingSpace = await this.spaceModel
+            .findByIdAndUpdate(id, updateSpaceDto, { new: true })
+            .exec();
         if (!existingSpace) {
             throw new common_1.NotFoundException(`Space with ID "${id}" not found`);
         }
         return existingSpace;
     }
     async remove(id) {
-        const deletedSpace = await this.spaceModel.findByIdAndDelete(id).exec();
-        if (!deletedSpace) {
+        const result = await this.spaceModel.findByIdAndDelete(id).exec();
+        if (!result) {
             throw new common_1.NotFoundException(`Space with ID "${id}" not found`);
         }
-        return deletedSpace;
+        return { deleted: true };
     }
 };
 exports.SpacesService = SpacesService;

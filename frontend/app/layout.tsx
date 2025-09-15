@@ -2,8 +2,8 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Blinker } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
-import { AuthProvider } from "@/contexts/auth-context"
 import { ThemeProvider } from "@/components/theme-provider"
+import { AuthProvider } from '@/contexts/auth-context';
 import { Suspense } from "react"
 import "./globals.css"
 
@@ -25,10 +25,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={blinker.variable}>
-      <body className="font-sans antialiased">
+    <html lang="en" className={blinker.variable}>
+      <body className="font-sans antialiased" suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <AuthProvider>
+                      <AuthProvider>
             <Suspense fallback={null}>{children}</Suspense>
           </AuthProvider>
         </ThemeProvider>

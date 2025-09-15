@@ -9,32 +9,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Upload, X, Plus } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { PricingEngine } from "@/app/components/spaces/_components/pricing-engine"
-import { api } from "@/lib/api/client"
+import { spacesAPI } from "@/lib/api"
 
-const amenityOptions = [
-  "WiFi",
-  "Parking",
-  "Catering",
-  "AV Equipment",
-  "Air Conditioning",
-  "Security",
-  "Kitchen",
-  "Bar",
-  "Outdoor Space",
-  "Wheelchair Accessible",
-  "Sound System",
-  "Projector",
-  "Whiteboard",
-  "Coffee Machine",
-  "Restrooms",
-]
+// amenityOptions removed as it was unused to avoid lint errors
 
 export function AddSpaceForm() {
   const [formData, setFormData] = useState({
@@ -145,12 +127,15 @@ export function AddSpaceForm() {
       const payload = {
         name: formData.name,
         description: formData.description,
+        address: formData.address,
         capacity: Number(formData.capacity) || 0,
-        pricePerHour: Number(formData.pricing.basePrice) || 0,
         amenities: formData.amenities,
+        pricing: {
+          hourlyRate: Number(formData.pricing.basePrice) || 0,
+        },
       }
 
-      const created = await api.createSpace(payload)
+      const created = await spacesAPI.create(payload)
 
       toast({
         title: "Space Added Successfully!",
@@ -345,7 +330,7 @@ export function AddSpaceForm() {
                       {formData.images.map((image, index) => (
                         <div key={index} className="relative">
                           <img
-                            src={URL.createObjectURL(image) || "/placeholder.svg"}
+                            src={URL.createObjectURL(image) || '/placeholder.svg'}
                             alt={`Upload ${index + 1}`}
                             className="w-full h-24 object-cover rounded-lg"
                           />
@@ -397,11 +382,13 @@ export function AddSpaceForm() {
 
           <div className="flex justify-end">
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Adding Space..." : "Add Space"}
+              {isSubmitting ? 'Adding Space...' : 'Add Space'}
             </Button>
           </div>
         </form>
       </div>
     </div>
-  )
-}
+  );
+};
+
+export default AddSpaceForm;

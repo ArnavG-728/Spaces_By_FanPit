@@ -15,49 +15,47 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthController = void 0;
 const common_1 = require("@nestjs/common");
 const auth_service_1 = require("./auth.service");
-const local_auth_guard_1 = require("./local-auth.guard");
-const jwt_auth_guard_1 = require("./jwt-auth.guard");
 const create_user_dto_1 = require("../users/dto/create-user.dto");
+const local_auth_guard_1 = require("./guards/local-auth.guard");
+const swagger_1 = require("@nestjs/swagger");
 let AuthController = class AuthController {
     authService;
     constructor(authService) {
         this.authService = authService;
     }
-    async login(req) {
-        return this.authService.login(req.user);
-    }
-    async signup(createUserDto) {
+    signup(createUserDto) {
         return this.authService.signup(createUserDto);
     }
-    getProfile(req) {
-        return req.user;
+    async login(req) {
+        return this.authService.login(req.user);
     }
 };
 exports.AuthController = AuthController;
 __decorate([
+    (0, common_1.Post)('signup'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
+    (0, swagger_1.ApiOperation)({ summary: 'Register a new user' }),
+    (0, swagger_1.ApiResponse)({ status: 201, description: 'User successfully registered.' }),
+    (0, swagger_1.ApiResponse)({ status: 409, description: 'Email already exists.' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [create_user_dto_1.CreateUserDto]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "signup", null);
+__decorate([
     (0, common_1.UseGuards)(local_auth_guard_1.LocalAuthGuard),
     (0, common_1.Post)('login'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({ summary: 'Log in a user' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'User successfully logged in.' }),
+    (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized.' }),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
-__decorate([
-    (0, common_1.Post)('signup'),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_user_dto_1.CreateUserDto]),
-    __metadata("design:returntype", Promise)
-], AuthController.prototype, "signup", null);
-__decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.Get)('profile'),
-    __param(0, (0, common_1.Request)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
-], AuthController.prototype, "getProfile", null);
 exports.AuthController = AuthController = __decorate([
+    (0, swagger_1.ApiTags)('auth'),
     (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService])
 ], AuthController);

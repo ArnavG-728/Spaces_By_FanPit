@@ -12,23 +12,20 @@ const config_1 = require("@nestjs/config");
 const mongoose_1 = require("@nestjs/mongoose");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
-const users_module_1 = require("./users/users.module");
 const spaces_module_1 = require("./spaces/spaces.module");
-const bookings_module_1 = require("./bookings/bookings.module");
-const check_ins_module_1 = require("./check-ins/check-ins.module");
-const issues_module_1 = require("./issues/issues.module");
-const auth_module_1 = require("./auth/auth.module");
-const health_module_1 = require("./health/health.module");
+const reservations_module_1 = require("./reservations/reservations.module");
 const payments_module_1 = require("./payments/payments.module");
+const analytics_module_1 = require("./analytics/analytics.module");
+const notifications_module_1 = require("./notifications/notifications.module");
+const users_module_1 = require("./users/users.module");
+const auth_module_1 = require("./auth/auth.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            config_1.ConfigModule.forRoot({
-                isGlobal: true,
-            }),
+            config_1.ConfigModule.forRoot({ isGlobal: true }),
             mongoose_1.MongooseModule.forRootAsync({
                 imports: [config_1.ConfigModule],
                 useFactory: async (configService) => ({
@@ -36,14 +33,13 @@ exports.AppModule = AppModule = __decorate([
                 }),
                 inject: [config_1.ConfigService],
             }),
-            users_module_1.UsersModule,
             spaces_module_1.SpacesModule,
-            bookings_module_1.BookingsModule,
-            check_ins_module_1.CheckInsModule,
-            issues_module_1.IssuesModule,
-            auth_module_1.AuthModule,
-            health_module_1.HealthModule,
+            reservations_module_1.ReservationsModule,
             payments_module_1.PaymentsModule,
+            analytics_module_1.AnalyticsModule,
+            notifications_module_1.NotificationsModule,
+            users_module_1.UsersModule,
+            auth_module_1.AuthModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

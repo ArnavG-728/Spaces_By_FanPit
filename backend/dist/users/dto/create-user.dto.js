@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateUserDto = void 0;
 const class_validator_1 = require("class-validator");
+const user_schema_1 = require("../schemas/user.schema");
 class CreateUserDto {
     name;
     email;
@@ -30,12 +31,13 @@ __decorate([
 ], CreateUserDto.prototype, "email", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MinLength)(8),
     (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.MinLength)(8, { message: 'Password must be at least 8 characters long' }),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "password", void 0);
 __decorate([
-    (0, class_validator_1.IsEnum)(['consumer', 'owner', 'staff']),
+    (0, class_validator_1.IsEnum)(user_schema_1.UserRole),
+    (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "role", void 0);
 //# sourceMappingURL=create-user.dto.js.map

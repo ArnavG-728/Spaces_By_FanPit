@@ -8,21 +8,24 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentsModule = void 0;
 const common_1 = require("@nestjs/common");
+const mongoose_1 = require("@nestjs/mongoose");
+const reservations_module_1 = require("../reservations/reservations.module");
+const notifications_module_1 = require("../notifications/notifications.module");
+const transaction_log_schema_1 = require("./schemas/transaction-log.schema");
 const payments_service_1 = require("./payments.service");
 const payments_controller_1 = require("./payments.controller");
-const mongoose_1 = require("@nestjs/mongoose");
-const booking_schema_1 = require("../bookings/schemas/booking.schema");
 let PaymentsModule = class PaymentsModule {
 };
 exports.PaymentsModule = PaymentsModule;
 exports.PaymentsModule = PaymentsModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            mongoose_1.MongooseModule.forFeature([{ name: booking_schema_1.Booking.name, schema: booking_schema_1.BookingSchema }])
+            mongoose_1.MongooseModule.forFeature([{ name: transaction_log_schema_1.TransactionLog.name, schema: transaction_log_schema_1.TransactionLogSchema }]),
+            reservations_module_1.ReservationsModule,
+            notifications_module_1.NotificationsModule,
         ],
         controllers: [payments_controller_1.PaymentsController],
         providers: [payments_service_1.PaymentsService],
-        exports: [payments_service_1.PaymentsService],
     })
 ], PaymentsModule);
 //# sourceMappingURL=payments.module.js.map

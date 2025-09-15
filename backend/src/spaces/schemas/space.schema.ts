@@ -1,34 +1,31 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Schema as MongooseSchema } from 'mongoose';
-import { User } from '../../users/schemas/user.schema';
+import { Document } from 'mongoose';
+import { Pricing, PricingSchema } from './pricing.schema';
 
 export type SpaceDocument = Space & Document;
 
 @Schema({ timestamps: true })
 export class Space {
-  @Prop({ required: true })
+  @Prop({ required: true, trim: true })
   name: string;
 
-  @Prop()
+  @Prop({ required: true, trim: true })
   description: string;
 
-  @Prop()
-  location: string;
+  @Prop({ required: true, trim: true })
+  address: string;
 
   @Prop({ required: true })
-  price: number;
-
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
-  owner: User;
-
-  @Prop([String])
-  amenities: string[];
-
-  @Prop()
   capacity: number;
 
-  @Prop([String])
+  @Prop({ type: [String], default: [] })
+  amenities: string[];
+
+  @Prop({ type: [String], default: [] })
   images: string[];
+
+  @Prop({ type: PricingSchema, default: () => ({}) })
+  pricing: Pricing;
 }
 
 export const SpaceSchema = SchemaFactory.createForClass(Space);

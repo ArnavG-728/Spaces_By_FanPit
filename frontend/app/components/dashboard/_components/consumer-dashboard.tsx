@@ -1,54 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useAuth } from "@/contexts/auth-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Calendar, MapPin, Clock, CreditCard, Star, Search } from "lucide-react"
 import { format } from "date-fns"
-
-// Mock data - replace with actual API calls
-const mockBookings = [
-  {
-    id: "1",
-    spaceName: "Modern Event Hall",
-    spaceImage: "/placeholder.svg?height=100&width=150",
-    date: new Date("2024-12-20"),
-    startTime: "14:00",
-    endTime: "18:00",
-    status: "confirmed",
-    totalAmount: 660,
-    location: "Downtown",
-    bookingCode: "SB001234",
-  },
-  {
-    id: "2",
-    spaceName: "Creative Co-working Hub",
-    spaceImage: "/placeholder.svg?height=100&width=150",
-    date: new Date("2024-12-15"),
-    startTime: "09:00",
-    endTime: "17:00",
-    status: "completed",
-    totalAmount: 220,
-    location: "Tech District",
-    bookingCode: "SB001235",
-  },
-  {
-    id: "3",
-    spaceName: "Rooftop Lounge",
-    spaceImage: "/placeholder.svg?height=100&width=150",
-    date: new Date("2024-12-25"),
-    startTime: "19:00",
-    endTime: "23:00",
-    status: "pending",
-    totalAmount: 330,
-    location: "City Center",
-    bookingCode: "SB001236",
-  },
-]
+import { reservationsAPI } from "@/lib/api"
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -66,20 +26,37 @@ const getStatusColor = (status: string) => {
 }
 
 export function ConsumerDashboard() {
-  const { user } = useAuth()
   const [activeTab, setActiveTab] = useState("upcoming")
+  const [bookings, setBookings] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const router = useRouter()
 
-  const upcomingBookings = mockBookings.filter(
-    (booking) => booking.status === "confirmed" || booking.status === "pending",
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const allBookings = await reservationsAPI.getAll()
+        setBookings(allBookings)
+      } catch (error) {
+        console.error("Failed to fetch bookings:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchBookings()
+  }, [])
+
+  const upcomingBookings = bookings.filter(
+    (booking) => booking.status === "confirmed" || booking.status === "pending"
   )
-  const pastBookings = mockBookings.filter((booking) => booking.status === "completed")
+  const pastBookings = bookings.filter((booking) => booking.status === "completed")
+  const totalSpent = bookings.reduce((sum, booking) => sum + booking.totalPrice, 0)
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <div className="flex justify-between items-center mb-2">
-          <h1 className="text-3xl font-bold">Welcome back, {user?.name}!</h1>
+          <h1 className="text-3xl font-bold">Welcome to your Dashboard</h1>
           <Button 
             variant="outline" 
             className="flex items-center gap-2"
@@ -101,7 +78,6 @@ export function ConsumerDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{upcomingBookings.length}</div>
-            <p className="text-xs text-muted-foreground">Next booking in 3 days</p>
           </CardContent>
         </Card>
 
@@ -111,7 +87,7 @@ export function ConsumerDashboard() {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$1,210</div>
+            <div className="text-2xl font-bold">${totalSpent}</div>
             <p className="text-xs text-muted-foreground">This year</p>
           </CardContent>
         </Card>
@@ -122,7 +98,7 @@ export function ConsumerDashboard() {
             <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">5</div>
+            <div className="text-2xl font-bold">0</div>
             <p className="text-xs text-muted-foreground">Saved for later</p>
           </CardContent>
         </Card>
@@ -136,7 +112,7 @@ export function ConsumerDashboard() {
         </TabsList>
 
         <TabsContent value="upcoming" className="space-y-6">
-          {upcomingBookings.length === 0 ? (
+          {loading ? <p>Loading...</p> : upcomingBookings.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
@@ -148,31 +124,31 @@ export function ConsumerDashboard() {
           ) : (
             <div className="space-y-4">
               {upcomingBookings.map((booking) => (
-                <Card key={booking.id}>
+                <Card key={booking._id}>
                   <CardContent className="p-6">
                     <div className="flex flex-col md:flex-row gap-6">
                       <img
-                        src={booking.spaceImage || "/placeholder.svg"}
-                        alt={booking.spaceName}
+                        src={booking.space.images?.[0] || "/placeholder.svg"}
+                        alt={booking.space.name}
                         className="w-full md:w-48 h-32 object-cover rounded-lg"
                       />
 
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-4">
                           <div>
-                            <h3 className="text-xl font-semibold mb-2">{booking.spaceName}</h3>
+                            <h3 className="text-xl font-semibold mb-2">{booking.space.name}</h3>
                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <MapPin className="h-4 w-4" />
-                                {booking.location}
+                                {booking.space.address}
                               </div>
                               <div className="flex items-center gap-1">
                                 <Calendar className="h-4 w-4" />
-                                {format(booking.date, "MMM dd, yyyy")}
+                                {format(new Date(booking.startTime), "MMM dd, yyyy")}
                               </div>
                               <div className="flex items-center gap-1">
                                 <Clock className="h-4 w-4" />
-                                {booking.startTime} - {booking.endTime}
+                                {new Date(booking.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(booking.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </div>
                             </div>
                           </div>
@@ -184,11 +160,11 @@ export function ConsumerDashboard() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm text-muted-foreground">Booking Code</p>
-                            <p className="font-mono text-sm">{booking.bookingCode}</p>
+                            <p className="font-mono text-sm">{booking._id}</p>
                           </div>
                           <div className="text-right">
                             <p className="text-sm text-muted-foreground">Total Amount</p>
-                            <p className="text-lg font-semibold">${booking.totalAmount}</p>
+                            <p className="text-lg font-semibold">${booking.totalPrice}</p>
                           </div>
                         </div>
 
@@ -213,7 +189,7 @@ export function ConsumerDashboard() {
         </TabsContent>
 
         <TabsContent value="past" className="space-y-6">
-          {pastBookings.length === 0 ? (
+          {loading ? <p>Loading...</p> : pastBookings.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Clock className="h-12 w-12 text-muted-foreground mb-4" />
@@ -224,31 +200,31 @@ export function ConsumerDashboard() {
           ) : (
             <div className="space-y-4">
               {pastBookings.map((booking) => (
-                <Card key={booking.id}>
+                <Card key={booking._id}>
                   <CardContent className="p-6">
                     <div className="flex flex-col md:flex-row gap-6">
                       <img
-                        src={booking.spaceImage || "/placeholder.svg"}
-                        alt={booking.spaceName}
+                        src={booking.space.images?.[0] || "/placeholder.svg"}
+                        alt={booking.space.name}
                         className="w-full md:w-48 h-32 object-cover rounded-lg"
                       />
 
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-4">
                           <div>
-                            <h3 className="text-xl font-semibold mb-2">{booking.spaceName}</h3>
+                            <h3 className="text-xl font-semibold mb-2">{booking.space.name}</h3>
                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <MapPin className="h-4 w-4" />
-                                {booking.location}
+                                {booking.space.address}
                               </div>
                               <div className="flex items-center gap-1">
                                 <Calendar className="h-4 w-4" />
-                                {format(booking.date, "MMM dd, yyyy")}
+                                {format(new Date(booking.startTime), "MMM dd, yyyy")}
                               </div>
                               <div className="flex items-center gap-1">
                                 <Clock className="h-4 w-4" />
-                                {booking.startTime} - {booking.endTime}
+                                {new Date(booking.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(booking.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </div>
                             </div>
                           </div>
@@ -260,11 +236,11 @@ export function ConsumerDashboard() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm text-muted-foreground">Booking Code</p>
-                            <p className="font-mono text-sm">{booking.bookingCode}</p>
+                            <p className="font-mono text-sm">{booking._id}</p>
                           </div>
                           <div className="text-right">
                             <p className="text-sm text-muted-foreground">Total Amount</p>
-                            <p className="text-lg font-semibold">${booking.totalAmount}</p>
+                            <p className="text-lg font-semibold">${booking.totalPrice}</p>
                           </div>
                         </div>
 

@@ -26,32 +26,26 @@ let UsersService = class UsersService {
         const createdUser = new this.userModel(createUserDto);
         return createdUser.save();
     }
+    async findByEmail(email) {
+        return this.userModel.findOne({ email }).select('+password').exec();
+    }
+    async findById(id) {
+        return this.userModel.findById(id).exec();
+    }
     async findAll() {
         return this.userModel.find().exec();
     }
     async findOne(id) {
-        const user = await this.userModel.findById(id).exec();
-        if (!user) {
-            throw new common_1.NotFoundException(`User with ID "${id}" not found`);
-        }
-        return user;
-    }
-    async findByEmail(email) {
-        return this.userModel.findOne({ email }).exec();
+        return this.userModel.findById(id).exec();
     }
     async update(id, updateUserDto) {
-        const existingUser = await this.userModel.findByIdAndUpdate(id, updateUserDto, { new: true }).exec();
-        if (!existingUser) {
-            throw new common_1.NotFoundException(`User with ID "${id}" not found`);
-        }
-        return existingUser;
+        return this.userModel
+            .findByIdAndUpdate(id, { $set: updateUserDto }, { new: true })
+            .exec();
     }
     async remove(id) {
-        const deletedUser = await this.userModel.findByIdAndDelete(id).exec();
-        if (!deletedUser) {
-            throw new common_1.NotFoundException(`User with ID "${id}" not found`);
-        }
-        return deletedUser;
+        const res = await this.userModel.deleteOne({ _id: id }).exec();
+        return { deletedCount: res.deletedCount };
     }
 };
 exports.UsersService = UsersService;
