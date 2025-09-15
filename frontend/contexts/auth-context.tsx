@@ -2,9 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
-
-const API_URL = 'http://localhost:3001/api';
+import { apiClient } from '../lib/api';
 
 interface User {
   _id: string;
@@ -36,30 +34,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (storedToken && storedUser) {
       setToken(storedToken);
       setUser(JSON.parse(storedUser));
-      axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
     }
     setLoading(false);
   }, []);
 
   const signup = async (userData: any) => {
-    const response = await axios.post(`${API_URL}/auth/signup`, userData);
+    const response = await apiClient.post('/auth/signup', userData);
     const { token, user: returnedUser } = response.data;
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(returnedUser));
     setToken(token);
     setUser(returnedUser);
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     router.push('/'); // Redirect to home after signup
   };
 
   const login = async (credentials: any) => {
-    const response = await axios.post(`${API_URL}/auth/login`, credentials);
+    const response = await apiClient.post('/auth/login', credentials);
     const { token, user: returnedUser } = response.data;
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(returnedUser));
     setToken(token);
     setUser(returnedUser);
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     router.push('/'); // Redirect to home after login
   };
 
@@ -68,7 +63,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('user');
     setToken(null);
     setUser(null);
-    delete axios.defaults.headers.common['Authorization'];
     router.push('/auth/login');
   };
 

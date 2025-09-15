@@ -13,7 +13,8 @@ async function bootstrap() {
     origin: [
       'http://localhost:3000',
       'https://localhost:3000',
-      configService.get<string>('FRONTEND_URL') || 'http://localhost:3000'
+      configService.get<string>('FRONTEND_URL') || 'http://localhost:3000',
+      'https://spaces-by-fan-pit-htdn-git-main-arnavgs-projects.vercel.app'
     ],
     credentials: true,
   });

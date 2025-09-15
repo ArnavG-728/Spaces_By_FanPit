@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 // Create an Axios instance configured for your backend API
-const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001/api',
+export const apiClient = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_BASE || 'https://spaces-by-fanpit-x3kc.onrender.com/api',
   headers: {
     'Content-Type': 'application/json',
   },
