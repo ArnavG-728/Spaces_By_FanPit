@@ -15,47 +15,83 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentsController = void 0;
 const common_1 = require("@nestjs/common");
 const payments_service_1 = require("./payments.service");
-const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
+const swagger_1 = require("@nestjs/swagger");
 let PaymentsController = class PaymentsController {
     paymentsService;
     constructor(paymentsService) {
         this.paymentsService = paymentsService;
     }
-    async createOrder(body) {
-        return this.paymentsService.createOrder(body.bookingId, body.amount);
+    handleWebhook(event, signature) {
+        return this.paymentsService.handleWebhook(event, signature);
     }
-    async verifyPayment(body) {
-        return this.paymentsService.verifyPayment(body.razorpay_order_id, body.razorpay_payment_id, body.razorpay_signature);
+    findAllLogs() {
+        return this.paymentsService.findAllLogs();
     }
-    async handleWebhook(payload) {
-        return this.paymentsService.handleWebhook(payload);
-    }
+    create() { }
+    findAll() { }
+    findOne() { }
+    update() { }
+    remove() { }
 };
 exports.PaymentsController = PaymentsController;
 __decorate([
-    (0, common_1.Post)('create-order'),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], PaymentsController.prototype, "createOrder", null);
-__decorate([
-    (0, common_1.Post)('verify'),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], PaymentsController.prototype, "verifyPayment", null);
-__decorate([
     (0, common_1.Post)('webhook'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({ summary: 'Handle Razorpay webhook events' }),
+    (0, swagger_1.ApiHeader)({
+        name: 'x-razorpay-signature',
+        description: 'The signature provided by Razorpay to verify the webhook authenticity.',
+        required: true,
+    }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Webhook received and processed.' }),
+    (0, swagger_1.ApiResponse)({ status: 400, description: 'Invalid signature.' }),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Headers)('x-razorpay-signature')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
 ], PaymentsController.prototype, "handleWebhook", null);
+__decorate([
+    (0, common_1.Get)('logs'),
+    (0, swagger_1.ApiOperation)({ summary: 'Retrieve all transaction logs (Admin)' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'A list of all transaction logs.' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], PaymentsController.prototype, "findAllLogs", null);
+__decorate([
+    (0, swagger_1.ApiExcludeEndpoint)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], PaymentsController.prototype, "create", null);
+__decorate([
+    (0, swagger_1.ApiExcludeEndpoint)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], PaymentsController.prototype, "findAll", null);
+__decorate([
+    (0, swagger_1.ApiExcludeEndpoint)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], PaymentsController.prototype, "findOne", null);
+__decorate([
+    (0, swagger_1.ApiExcludeEndpoint)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], PaymentsController.prototype, "update", null);
+__decorate([
+    (0, swagger_1.ApiExcludeEndpoint)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], PaymentsController.prototype, "remove", null);
 exports.PaymentsController = PaymentsController = __decorate([
+    (0, swagger_1.ApiTags)('payments'),
     (0, common_1.Controller)('payments'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __metadata("design:paramtypes", [payments_service_1.PaymentsService])
 ], PaymentsController);
 //# sourceMappingURL=payments.controller.js.map

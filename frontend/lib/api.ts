@@ -1,86 +1,146 @@
 import axios from 'axios';
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-console.log('[API] baseURL =', apiBaseUrl);
-
-const api = axios.create({
-  baseURL: apiBaseUrl,
-  withCredentials: true,
+// Create an Axios instance configured for your backend API
+const apiClient = axios.create({
+  baseURL: 'http://localhost:3001/api',
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
-let accessToken = '';
-
-export const setAccessToken = (token: string) => {
-  accessToken = token;
-};
-
-api.interceptors.request.use(
-  (config: any) => {
-    if (accessToken) {
-      console.log('Attaching access token to request');
-      config.headers.Authorization = `Bearer ${accessToken}`;
+// Add a request interceptor to include the token in headers
+apiClient.interceptors.request.use(
+  (config) => {
+    // Check if window is defined to ensure this code runs only on the client-side
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
   (error) => {
-    console.error('Request error:', error);
     return Promise.reject(error);
-  },
+  }
 );
 
+// Define the structure of a Space object based on our backend schema
+export interface Space {
+  _id: string;
+  name: string;
+  description: string;
+  address: string;
+  capacity: number;
+  amenities: string[];
+  images: string[];
+  pricing: {
+    hourlyRate?: number;
+    dailyRate?: number;
+  };
+}
 
-// Auth API
-export const authAPI = {
-  signup: (data: { name: string; email: string; password: string; role: string }) =>
-    api.post('/api/auth/signup', data),
-  login: (data: { email: string; password: string }) =>
-    api.post('/api/auth/login', data),
-  profile: () => api.get('/api/auth/profile'),
-};
-
-// Spaces API
+// API functions related to spaces
 export const spacesAPI = {
-  getAll: () => api.get('/api/spaces'),
-  getById: (id: string) => api.get(`/api/spaces/${id}`),
-  create: (data: any) => api.post('/api/spaces', data),
-  update: (id: string, data: any) => api.patch(`/api/spaces/${id}`, data),
-  delete: (id: string) => api.delete(`/api/spaces/${id}`),
+  /**
+   * Fetches all spaces from the backend.
+   * @returns {Promise<Space[]>} A promise that resolves to an array of spaces.
+   */
+  async getAllSpaces(): Promise<Space[]> {
+    try {
+      const response = await apiClient.get('/spaces');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch spaces:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Fetches a single space by its ID.
+   * @param {string} id The ID of the space to fetch.
+   * @returns {Promise<Space>} A promise that resolves to the space object.
+   */
+  async getById(id: string): Promise<Space> {
+    const response = await apiClient.get(`/spaces/${id}`);
+    return response.data;
+  },
+
+  /**
+   * Creates a new space.
+   * @param {Omit<Space, '_id'>} spaceData The data for the new space.
+   * @returns {Promise<Space>} A promise that resolves to the newly created space object.
+   */
+  async create(spaceData: Partial<Omit<Space, '_id'>>): Promise<Space> {
+    const response = await apiClient.post('/spaces', spaceData);
+    return response.data;
+  },
 };
 
-// Bookings API
-export const bookingsAPI = {
-  getAll: () => api.get('/api/bookings'),
-  getById: (id: string) => api.get(`/api/bookings/${id}`),
-  create: (data: any) => api.post('/api/bookings', data),
-  update: (id: string, data: any) => api.patch(`/api/bookings/${id}`, data),
-  delete: (id: string) => api.delete(`/api/bookings/${id}`),
+// API functions related to reservations
+export const reservationsAPI = {
+  /**
+   * Fetches all reservations.
+   * @returns {Promise<any[]>} A promise that resolves to an array of reservations.
+   */
+  async getAll(): Promise<any[]> {
+    const response = await apiClient.get('/reservations');
+    return response.data;
+  },
+
+  /**
+   * Fetches a single reservation by its ID.
+   * @param {string} id The ID of the reservation to fetch.
+   * @returns {Promise<any>} A promise that resolves to the reservation object.
+   */
+  async getById(id: string): Promise<any> {
+    const response = await apiClient.get(`/reservations/${id}`);
+    return response.data;
+  },
+
+  /**
+   * Updates a reservation.
+   * @param {string} id The ID of the reservation to update.
+   * @param {object} data The data to update.
+   * @returns {Promise<any>} A promise that resolves to the updated reservation object.
+   */
+  async update(id: string, data: any): Promise<any> {
+    const response = await apiClient.patch(`/reservations/${id}`, data);
+    return response.data;
+  },
+
+  /**
+   * Creates a new reservation.
+   * @param {object} reservationData The data for the new reservation.
+   * @returns {Promise<any>} A promise that resolves to the new reservation object.
+   */
+  async create(reservationData: { spaceId: string; userId: string; startTime: string; endTime: string }): Promise<any> {
+    const response = await apiClient.post('/reservations', reservationData);
+    return response.data;
+  },
 };
 
-// Payments API
-export const paymentsAPI = {
-  createOrder: (data: { bookingId: string; amount: number }) =>
-    api.post('/api/payments/create-order', data),
-  verifyPayment: (data: {
-    razorpay_order_id: string;
-    razorpay_payment_id: string;
-    razorpay_signature: string;
-  }) => api.post('/api/payments/verify', data),
-};
-
-// Check-ins API
-export const checkInsAPI = {
-  getAll: () => api.get('/api/check-ins'),
-  getById: (id: string) => api.get(`/api/check-ins/${id}`),
-  create: (data: any) => api.post('/api/check-ins', data),
-  update: (id: string, data: any) => api.patch(`/api/check-ins/${id}`, data),
-};
-
-// Issues API
+// API functions related to check-ins
 export const issuesAPI = {
-  getAll: () => api.get('/api/issues'),
-  getById: (id: string) => api.get(`/api/issues/${id}`),
-  create: (data: any) => api.post('/api/issues', data),
-  update: (id: string, data: any) => api.patch(`/api/issues/${id}`, data),
+  async create(issueData: { bookingCode: string; issue: string; priority: string }): Promise<any> {
+    const response = await apiClient.post('/issues', issueData);
+    return response.data;
+  },
+  async getAll(): Promise<any[]> {
+    const response = await apiClient.get('/issues');
+    return response.data;
+  },
 };
 
-export default api;
+export const checkinsAPI = {
+  /**
+   * Creates a new check-in.
+   * @param {object} checkinData The data for the new check-in.
+   * @returns {Promise<any>} A promise that resolves to the new check-in object.
+   */
+  async create(checkinData: { reservation: string; user: string }): Promise<any> {
+    const response = await apiClient.post('/checkins', checkinData);
+    return response.data;
+  },
+};
+

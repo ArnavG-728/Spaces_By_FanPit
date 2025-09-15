@@ -1,62 +1,46 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/contexts/auth-context"
+import { useState } from "react";
+import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/hooks/use-toast";
 
 export function SignupForm() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [name, setName] = useState("")
-  const [role, setRole] = useState<'consumer' | 'owner' | 'staff'>("consumer")
-  const { signup, isLoading } = useAuth()
-  const { toast } = useToast()
-  const router = useRouter()
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [role, setRole] = useState<'consumer' | 'owner' | 'staff'>('consumer');
+  const { signup, loading } = useAuth();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('[SignupForm] Submit clicked');
-    const nameParts = name.trim().split(/\s+/);
-    const firstName = nameParts[0] || '';
-    const lastName = nameParts.slice(1).join(' ') || firstName; // Default to firstName if lastName is empty
-
-    const fullName = `${firstName} ${lastName}`.trim();
-
     if (password.length < 8) {
       toast({
         title: "Password too short",
         description: "Password must be at least 8 characters long",
         variant: "destructive",
-      })
+      });
       return;
     }
-
-    console.log('[SignupForm] Payload', { email, fullName, role });
     try {
-      await signup(email, password, fullName, role);
+      await signup({ name, email, password, role });
       toast({
-        title: "Account created successfully!",
-        description: "Welcome to Spaces",
-      })
-      // Let auth context handle redirect after user state is updated
-      // No manual redirect needed here
-    } catch (error) {
-      console.error('[SignupForm] Signup failed:', error);
+        title: "Account created!",
+        description: "You have been successfully signed up and logged in.",
+      });
+    } catch (error: any) {
       toast({
-        title: "Signup failed",
-        description: "Please try again",
+        title: "Signup Failed",
+        description: error.response?.data?.message || "An unexpected error occurred.",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -68,11 +52,11 @@ export function SignupForm() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Full Name</Label>
-            <Input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} required />
+            <Input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} required autoComplete="name" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
@@ -83,6 +67,7 @@ export function SignupForm() {
               onChange={(e) => setPassword(e.target.value)}
               minLength={8}
               required
+              autoComplete="new-password"
             />
             <div className="text-xs text-muted-foreground">
               Password must be at least 8 characters long
@@ -90,7 +75,7 @@ export function SignupForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="role">Account Type</Label>
-            <Select value={role} onValueChange={(value: 'consumer' | 'owner' | 'staff') => setRole(value)}>
+                        <Select value={role} onValueChange={(value) => setRole(value as 'consumer' | 'owner' | 'staff')}>
               <SelectTrigger>
                 <SelectValue placeholder="Select your role" />
               </SelectTrigger>
@@ -101,8 +86,8 @@ export function SignupForm() {
               </SelectContent>
             </Select>
           </div>
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Creating Account..." : "Create Account"}
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? 'Creating Account...' : 'Create Account'}
           </Button>
         </form>
       </CardContent>

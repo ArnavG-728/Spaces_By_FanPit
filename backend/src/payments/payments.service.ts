@@ -1,89 +1,87 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Booking, BookingDocument } from '../bookings/schemas/booking.schema';
-const Razorpay = require('razorpay');
+import { ConfigService } from '@nestjs/config';
+import * as crypto from 'crypto';
+
+import { ReservationsService } from '../reservations/reservations.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { TransactionLog, TransactionLogDocument, TransactionStatus } from './schemas/transaction-log.schema';
 
 @Injectable()
 export class PaymentsService {
-  private razorpay: any;
+  private readonly webhookSecret: string;
 
   constructor(
-    @InjectModel(Booking.name) private bookingModel: Model<BookingDocument>,
+    @InjectModel(TransactionLog.name) private readonly transactionLogModel: Model<TransactionLogDocument>,
+    private readonly reservationsService: ReservationsService,
+        private readonly configService: ConfigService,
+    private readonly notificationsService: NotificationsService,
   ) {
-    this.razorpay = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_key',
-      key_secret: process.env.RAZORPAY_KEY_SECRET || 'rzp_test_secret',
-    });
+        const secret = this.configService.get<string>('RAZORPAY_KEY_SECRET');
+    if (!secret) {
+      throw new Error('RAZORPAY_KEY_SECRET is not defined in environment variables.');
+    }
+    this.webhookSecret = secret;
   }
 
-  async createOrder(bookingId: string, amount: number) {
-    const options = {
-      amount: amount * 100, // Razorpay expects amount in paise
-      currency: 'INR',
-      receipt: `booking_${bookingId}`,
-      notes: {
-        booking_id: bookingId,
-      },
-    };
+  async handleWebhook(event: any, signature: string) {
+    // 1. Verify webhook signature
+    const isValid = this.verifySignature(JSON.stringify(event), signature);
+    if (!isValid) {
+      throw new BadRequestException('Invalid Razorpay webhook signature');
+    }
 
-    const order = await this.razorpay.orders.create(options);
-    
-    // Update booking with payment details
-    await this.bookingModel.findByIdAndUpdate(bookingId, {
-      paymentOrderId: order.id,
-      paymentStatus: 'pending',
-      amount: amount,
-    });
+    // 2. Process the event
+    if (event.event === 'payment.captured') {
+      const payment = event.payload.payment.entity;
+      const orderId = payment.order_id;
 
-    return order;
-  }
-
-  async verifyPayment(razorpayOrderId: string, razorpayPaymentId: string, razorpaySignature: string) {
-    const crypto = require('crypto');
-    const body = razorpayOrderId + '|' + razorpayPaymentId;
-    const expectedSignature = crypto
-      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || 'rzp_test_secret')
-      .update(body.toString())
-      .digest('hex');
-
-    if (expectedSignature === razorpaySignature) {
-      // Update booking status
-      await this.bookingModel.findOneAndUpdate(
-        { paymentOrderId: razorpayOrderId },
-        { 
-          paymentStatus: 'completed',
-          paymentId: razorpayPaymentId,
-          paidAt: new Date(),
-        }
+      // Update reservation status and details
+      const reservation = await this.reservationsService.handleSuccessfulPayment(
+        orderId,
+        payment.id,
+        signature,
       );
-      return { status: 'success' };
-    } else {
-      return { status: 'failure' };
+
+      // Log the transaction
+            await this.createTransactionLog(reservation, payment, TransactionStatus.SUCCESS, event);
+
+      // 5. Send confirmation email
+      // In a real app, you would look up the user's email from the reservation.userId
+      await this.notificationsService.sendReservationConfirmation(reservation.userId, reservation as any);
     }
+
+    // TODO: Handle other events like 'payment.failed' or 'refund.processed'
+
+    return { received: true };
   }
 
-  async handleWebhook(payload: any) {
-    const event = payload.event;
-    const paymentEntity = payload.payload.payment.entity;
+  private verifySignature(body: string, signature: string): boolean {
+    const hmac = crypto.createHmac('sha256', this.webhookSecret);
+    hmac.update(body);
+    const generatedSignature = hmac.digest('hex');
+    return generatedSignature === signature;
+  }
 
-    switch (event) {
-      case 'payment.captured':
-        await this.bookingModel.findOneAndUpdate(
-          { paymentOrderId: paymentEntity.order_id },
-          { 
-            paymentStatus: 'completed',
-            paymentId: paymentEntity.id,
-            paidAt: new Date(),
-          }
-        );
-        break;
-      case 'payment.failed':
-        await this.bookingModel.findOneAndUpdate(
-          { paymentOrderId: paymentEntity.order_id },
-          { paymentStatus: 'failed' }
-        );
-        break;
-    }
+  private async createTransactionLog(
+    reservation: any,
+    payment: any,
+    status: TransactionStatus,
+    rawEvent: any,
+  ): Promise<TransactionLog> {
+    const log = new this.transactionLogModel({
+      reservationId: reservation._id,
+      spaceId: reservation.spaceId,
+      razorpayOrderId: payment.order_id,
+      razorpayPaymentId: payment.id,
+      status,
+      rawEvent,
+    });
+    return log.save();
+  }
+
+  async findAllLogs(): Promise<TransactionLog[]> {
+    return this.transactionLogModel.find().sort({ createdAt: -1 }).exec();
   }
 }

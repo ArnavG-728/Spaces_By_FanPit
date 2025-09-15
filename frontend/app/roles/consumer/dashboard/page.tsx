@@ -1,26 +1,26 @@
 "use client"
 
-import { useAuth } from "@/contexts/auth-context"
 import { Navbar } from "@/components/navbar"
 import { ConsumerDashboard } from "@/app/components/dashboard/_components/consumer-dashboard"
 import { useRouter } from "next/navigation"
+import { useAuth } from '@/contexts/auth-context'
 import { useEffect } from "react"
 
 export default function ConsumerDashboardPage() {
-  const { user, isLoading } = useAuth()
+  const { user, loading } = useAuth()
   const router = useRouter()
-
+  
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (!loading && !user) {
       router.replace("/auth/login")
     }
-    if (!isLoading && user && user.role !== "consumer") {
+    if (!loading && user && user.role !== "consumer") {
       if (user.role === "owner") router.replace("/roles/owner/dashboard")
       if (user.role === "staff") router.replace("/roles/staff/dashboard")
     }
-  }, [user, isLoading, router])
+  }, [user, loading, router])
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />

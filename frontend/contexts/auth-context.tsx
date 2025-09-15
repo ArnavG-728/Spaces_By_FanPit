@@ -1,10 +1,13 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authAPI, setAccessToken } from '@/lib/api';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
+import axios from 'axios';
+
+const API_URL = 'http://localhost:3001/api';
 
 interface User {
-  id: string;
+  _id: string;
   name: string;
   email: string;
   role: 'consumer' | 'owner' | 'staff';
@@ -12,85 +15,74 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string, role: string) => Promise<void>;
+  token: string | null;
+  loading: boolean;
+  signup: (userData: any) => Promise<void>;
+  login: (credentials: any) => Promise<void>;
   logout: () => void;
-  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    // Check if user is logged in on app start
-    const savedUser = localStorage.getItem('user');
-    const savedToken = localStorage.getItem('access_token');
-    if (savedUser && savedToken) {
-      setUser(JSON.parse(savedUser));
-      setAccessToken(savedToken);
+    const storedToken = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+    if (storedToken && storedUser) {
+      setToken(storedToken);
+      setUser(JSON.parse(storedUser));
+      axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
     }
-    setIsLoading(false);
+    setLoading(false);
   }, []);
 
-  const login = async (email: string, password: string) => {
-    setIsLoading(true);
-    try {
-      const response = await authAPI.login({ email, password });
-      const { access_token } = response.data;
-      
-      setAccessToken(access_token);
-      localStorage.setItem('access_token', access_token);
-      
-      // Get user profile
-      const profileResponse = await authAPI.profile();
-      const userData = profileResponse.data;
-      
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
-    } catch (error) {
-      console.error('Login error details:', error);
-      throw new Error('Login failed');
-    } finally {
-      setIsLoading(false);
-    }
+  const signup = async (userData: any) => {
+    const response = await axios.post(`${API_URL}/auth/signup`, userData);
+    const { token, user: returnedUser } = response.data;
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(returnedUser));
+    setToken(token);
+    setUser(returnedUser);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    router.push('/'); // Redirect to home after signup
   };
 
-  const signup = async (email: string, password: string, name: string, role: string) => {
-    setIsLoading(true);
-    try {
-      console.log('Signup attempt:', { name, email, password: '***', role });
-      await authAPI.signup({ name, email, password, role });
-      // Auto-login after signup
-      await login(email, password);
-    } catch (error) {
-      console.error('Signup error:', error);
-      throw new Error('Signup failed');
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const login = async (credentials: any) => {
+    const response = await axios.post(`${API_URL}/auth/login`, credentials);
+    const { token, user: returnedUser } = response.data;
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(returnedUser));
+    setToken(token);
+    setUser(returnedUser);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    router.push('/'); // Redirect to home after login
+  };
 
   const logout = () => {
-    setUser(null);
-    setAccessToken('');
+    localStorage.removeItem('token');
     localStorage.removeItem('user');
-    localStorage.removeItem('access_token');
+    setToken(null);
+    setUser(null);
+    delete axios.defaults.headers.common['Authorization'];
+    router.push('/auth/login');
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, token, loading, signup, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
-export function useAuth() {
-  const context = useContext(AuthContext)
+export const useAuth = () => {
+  const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
+    throw new Error('useAuth must be used within an AuthProvider');
   }
-  return context
-}
+  return context;
+};

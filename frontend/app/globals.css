@@ -27,7 +27,7 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
   /* Updated primary color to purple brand color #8C52FF */
-  --primary: oklch(0.6 0.25 280);
+  --primary: #8C52FF;
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -64,7 +64,7 @@
   --popover: oklch(0.145 0 0);
   --popover-foreground: oklch(0.985 0 0);
   /* Updated primary color for dark mode */
-  --primary: oklch(0.7 0.25 280);
+  --primary: #8C52FF;
   --primary-foreground: oklch(0.145 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);

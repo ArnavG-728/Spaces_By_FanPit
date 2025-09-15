@@ -1,28 +1,20 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useAuth } from "@/contexts/auth-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Building2, Calendar, DollarSign, Plus, Eye, Edit, Trash2, TrendingUp, Loader2 } from "lucide-react"
 import Link from "next/link"
-import { api } from "@/lib/api/client"
 import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/contexts/auth-context"
+import { spacesAPI, reservationsAPI, Space } from "@/lib/api"
 
-interface SpaceWithStats {
-  _id: string
-  name: string
-  description: string
-  capacity: number
-  pricePerHour: number
-  amenities: string[]
-  status: 'active' | 'inactive'
-  // Mock stats - replace with real data when available
-  bookings: number
-  revenue: number
-  occupancy: number
+interface SpaceWithStats extends Space {
+  status: 'active' | 'inactive';
+  bookings: number;
+  revenue: number;
 }
 
 
@@ -50,32 +42,39 @@ export function OwnerDashboard() {
   const { toast } = useToast()
   const [activeTab, setActiveTab] = useState("overview")
   const [spaces, setSpaces] = useState<SpaceWithStats[]>([])
+  const [reservations, setReservations] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const fetchSpaces = async () => {
+    useEffect(() => {
+    const fetchData = async () => {
       try {
         setIsLoading(true)
-        const data = await api.listSpaces()
-        
-        // Map API data to include mock stats (replace with real stats when available)
-        const spacesWithStats: SpaceWithStats[] = data.map(space => ({
-          ...space,
-          _id: space._id || '',
-          status: 'active' as const, // Default to active, update based on your business logic
-          bookings: Math.floor(Math.random() * 100), // Mock data
-          revenue: Math.floor(Math.random() * 10000), // Mock data
-          occupancy: Math.floor(Math.random() * 100), // Mock data
-        }))
-        
+        const [spacesData, reservationsData] = await Promise.all([
+          spacesAPI.getAllSpaces(),
+          reservationsAPI.getAll(),
+        ])
+
+        setReservations(reservationsData)
+
+        const spacesWithStats: SpaceWithStats[] = spacesData.map(space => {
+          const spaceReservations = reservationsData.filter(r => r.space._id === space._id)
+          const spaceRevenue = spaceReservations.reduce((sum, r) => sum + r.totalPrice, 0)
+          return {
+            ...space,
+            status: 'active' as const, // Default to active, update based on your business logic
+            bookings: spaceReservations.length,
+            revenue: spaceRevenue,
+          }
+        })
+
         setSpaces(spacesWithStats)
       } catch (err) {
-        console.error('Failed to fetch spaces:', err)
-        setError('Failed to load spaces. Please try again.')
+        console.error('Failed to fetch data:', err)
+        setError('Failed to load dashboard data. Please try again.')
         toast({
           title: "Error",
-          description: "Failed to load spaces. Please try again.",
+          description: "Failed to load dashboard data. Please try again.",
           variant: "destructive",
         })
       } finally {
@@ -83,16 +82,13 @@ export function OwnerDashboard() {
       }
     }
 
-    fetchSpaces()
+    fetchData()
   }, [toast])
 
   const totalRevenue = spaces.reduce((sum, space) => sum + space.revenue, 0)
   const totalBookings = spaces.reduce((sum, space) => sum + space.bookings, 0)
   const activeSpaces = spaces.filter((space) => space.status === "active").length
-  const avgOccupancy = spaces.length > 0 
-    ? Math.round(spaces.reduce((sum, space) => sum + space.occupancy, 0) / spaces.length)
-    : 0
-
+  
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -155,12 +151,12 @@ export function OwnerDashboard() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Avg Occupancy</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Total Spaces</CardTitle>
+                <Building2 className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{avgOccupancy}%</div>
-                <p className="text-xs text-muted-foreground">This month</p>
+                <div className="text-2xl font-bold">{spaces.length}</div>
+                <p className="text-xs text-muted-foreground">Active on the platform</p>
               </CardContent>
             </Card>
           </div>
@@ -179,7 +175,7 @@ export function OwnerDashboard() {
                     <div>
                       <h4 className="font-semibold">{space.name}</h4>
                       <p className="text-sm text-muted-foreground">
-                        Up to {space.capacity} guests • ${space.pricePerHour}/hour
+                        Up to {space.capacity} guests • ${space.pricing.hourlyRate}/hour
                       </p>
                       <p className="text-sm text-muted-foreground">{space.bookings} total bookings</p>
                     </div>
@@ -199,7 +195,7 @@ export function OwnerDashboard() {
         <TabsContent value="spaces" className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold">My Spaces</h2>
-            <Link href="/owner/spaces/new">
+            <Link href="/roles/owner/spaces/new">
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
                 Add New Space
@@ -236,13 +232,11 @@ export function OwnerDashboard() {
                       <p className="text-xs text-muted-foreground">Bookings</p>
                     </div>
                     <div>
-                      <p className="text-lg font-semibold">${space.pricePerHour}<span className="text-sm font-normal text-muted-foreground">/hour</span></p>
+                      <p className="text-lg font-semibold">${space.pricing.hourlyRate}<span className="text-sm font-normal text-muted-foreground">/hour</span></p>
                       <p className="text-xs text-muted-foreground">Revenue</p>
                     </div>
                     <div>
-                      <p className="text-lg font-semibold">{space.occupancy}%</p>
-                      <p className="text-xs text-muted-foreground">Occupancy</p>
-                    </div>
+                                          </div>
                   </div>
 
                   <div className="flex gap-2">
@@ -303,30 +297,29 @@ export function OwnerDashboard() {
                           No bookings found. Bookings will appear here when available.
                         </td>
                       </tr>
-                    ) : spaces.slice(0, 5).map((space) => (
-                      <tr key={space._id} className="border-b">
-                        <td className="p-4 font-medium">{space.name}</td>
-                        <td className="p-4">Sample Customer</td>
+                    ) : reservations.slice(0, 5).map((reservation) => (
+                      <tr key={reservation._id} className="border-b">
+                        <td className="p-4 font-medium">{reservation.space.name}</td>
+                        <td className="p-4">{reservation.user.name}</td>
                         <td className="p-4">
                           <div>
-                            <p>{new Date().toLocaleDateString()}</p>
-                            <p className="text-sm text-muted-foreground">12:00 - 14:00</p>
+                            <p>{new Date(reservation.startTime).toLocaleDateString()}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(reservation.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(reservation.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
                           </div>
                         </td>
-                        <td className="p-4">{Math.floor(space.capacity * 0.7)}</td>
-                        <td className="p-4 font-semibold">${space.pricePerHour * 2}</td>
+                        <td className="p-4">{reservation.space.capacity}</td>
+                        <td className="p-4 font-semibold">${reservation.totalPrice}</td>
                         <td className="p-4">
-                          <Badge className={getStatusColor('confirmed')}>
-                            Confirmed
+                          <Badge className={getStatusColor(reservation.status)}>
+                            {reservation.status}
                           </Badge>
                         </td>
                         <td className="p-4">
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
-                              View
-                            </Button>
-                            <Button size="sm" variant="outline">View Details</Button>
-                          </div>
+                          <Button variant="outline" size="sm">
+                            View
+                          </Button>
                         </td>
                       </tr>
                     ))
@@ -378,8 +371,7 @@ export function OwnerDashboard() {
                       </div>
                       <div className="text-right">
                         <p className="font-semibold">${space.revenue}</p>
-                        <p className="text-sm text-muted-foreground">{space.occupancy}% occupancy</p>
-                      </div>
+                                              </div>
                     </div>
                   ))}
                 </div>
@@ -398,7 +390,7 @@ export function OwnerDashboard() {
                   </div>
                   <div className="flex justify-between">
                     <span>Average Booking Value</span>
-                    <span className="font-semibold">${Math.round(totalRevenue / totalBookings)}</span>
+                    <span className="font-semibold">${totalBookings > 0 ? Math.round(totalRevenue / totalBookings) : 0}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Customer Satisfaction</span>

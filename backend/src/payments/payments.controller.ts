@@ -1,32 +1,49 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Headers, HttpCode, HttpStatus, Get } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { ApiTags, ApiOperation, ApiResponse, ApiExcludeEndpoint, ApiHeader } from '@nestjs/swagger';
 
+@ApiTags('payments')
 @Controller('payments')
-@UseGuards(JwtAuthGuard)
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
-  @Post('create-order')
-  async createOrder(@Body() body: { bookingId: string; amount: number }) {
-    return this.paymentsService.createOrder(body.bookingId, body.amount);
-  }
-
-  @Post('verify')
-  async verifyPayment(@Body() body: {
-    razorpay_order_id: string;
-    razorpay_payment_id: string;
-    razorpay_signature: string;
-  }) {
-    return this.paymentsService.verifyPayment(
-      body.razorpay_order_id,
-      body.razorpay_payment_id,
-      body.razorpay_signature
-    );
-  }
-
   @Post('webhook')
-  async handleWebhook(@Body() payload: any) {
-    return this.paymentsService.handleWebhook(payload);
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Handle Razorpay webhook events' })
+  @ApiHeader({
+    name: 'x-razorpay-signature',
+    description: 'The signature provided by Razorpay to verify the webhook authenticity.',
+    required: true,
+  })
+  @ApiResponse({ status: 200, description: 'Webhook received and processed.' })
+  @ApiResponse({ status: 400, description: 'Invalid signature.' })
+  handleWebhook(
+    @Body() event: any,
+    @Headers('x-razorpay-signature') signature: string,
+  ) {
+    return this.paymentsService.handleWebhook(event, signature);
   }
+
+  @Get('logs')
+  @ApiOperation({ summary: 'Retrieve all transaction logs (Admin)' })
+  @ApiResponse({ status: 200, description: 'A list of all transaction logs.' })
+  findAllLogs() {
+    return this.paymentsService.findAllLogs();
+  }
+
+  // Exclude the default CRUD endpoints that are not used
+  @ApiExcludeEndpoint()
+  create() {}
+
+  @ApiExcludeEndpoint()
+  findAll() {}
+
+  @ApiExcludeEndpoint()
+  findOne() {}
+
+  @ApiExcludeEndpoint()
+  update() {}
+
+  @ApiExcludeEndpoint()
+  remove() {}
 }

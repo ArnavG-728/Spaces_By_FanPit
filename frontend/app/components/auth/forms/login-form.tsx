@@ -1,57 +1,37 @@
 "use client"
 
-import type React from "react"
+"use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/contexts/auth-context"
+import { useState } from "react";
+import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/hooks/use-toast";
 
 export function LoginForm() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const { login, loading } = useAuth()
-  const { toast } = useToast()
-  const router = useRouter()
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const { login, loading } = useAuth();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
-      await login(email, password)
+      await login({ email, password });
       toast({
         title: "Welcome back!",
-        description: "You have been logged in successfully",
-      })
-      // Get the user from localStorage since login just set it
-      const savedUser = localStorage.getItem("user")
-      if (savedUser) {
-        const user = JSON.parse(savedUser)
-        switch (user.role) {
-          case "consumer":
-            router.push("/roles/consumer/dashboard")
-            break
-          case "owner":
-            router.push("/roles/owner/dashboard")
-            break
-          case "staff":
-            router.push("/roles/staff/dashboard")
-            break
-          default:
-            router.push("/roles/consumer/dashboard")
-        }
-      }
-    } catch (error) {
+        description: "You have been successfully logged in.",
+      });
+    } catch (error: any) {
       toast({
-        title: "Login failed",
-        description: "Please check your credentials",
+        title: "Login Failed",
+        description: error.response?.data?.message || "Invalid credentials. Please try again.",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -63,7 +43,7 @@ export function LoginForm() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
@@ -73,10 +53,11 @@ export function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="current-password"
             />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Signing In..." : "Sign In"}
+            {loading ? 'Signing In...' : 'Sign In'}
           </Button>
         </form>
       </CardContent>

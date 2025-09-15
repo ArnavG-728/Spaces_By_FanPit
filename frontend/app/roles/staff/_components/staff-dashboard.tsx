@@ -1,8 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import api from "@/lib/api";
-import { useAuth } from "@/contexts/auth-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -14,37 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar, CheckCircle, Search, QrCode, UserCheck, UserX, Flag } from "lucide-react"
 import { format } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
-
-// Define types for our data
-interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-}
-
-interface Space {
-  _id: string;
-  name: string;
-  capacity: number;
-}
-
-interface Reservation {
-  id: string;
-  user: User;
-  space: Space;
-  startTime: string;
-  endTime: string;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-  totalPrice: number;
-  notes?: string;
-}
-
-interface Checkin {
-  _id: string;
-  reservation: string;
-  checkinTime: string;
-}
+import { useAuth } from "@/contexts/auth-context";
+import { reservationsAPI, checkinsAPI, issuesAPI } from "@/lib/api";
 
 // We will define a more complete Issue type later
 interface Issue {
@@ -88,7 +57,7 @@ const getPriorityColor = (priority: string) => {
 export function StaffDashboard() {
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState("today")
-  const [bookings, setBookings] = useState<Reservation[]>([])
+  const [bookings, setBookings] = useState<any[]>([])
   const [issues, setIssues] = useState<Issue[]>([])
   const [loading, setLoading] = useState(true)
   const [searchCode, setSearchCode] = useState("")
@@ -103,11 +72,12 @@ export function StaffDashboard() {
     const fetchData = async () => {
       setLoading(true)
       try {
-        // In a real app, you'd fetch from your API endpoint
-        // For now, we'll use an empty array as we've removed mock data
-        const { data: reservations } = await api.get('/reservations');
+        const [reservations, issues] = await Promise.all([
+          reservationsAPI.getAll(),
+          issuesAPI.getAll(),
+        ]);
         setBookings(reservations);
-        setIssues([]); // Issues will be implemented later
+        setIssues(issues);
 
       } catch (error) {
         toast({
@@ -133,17 +103,16 @@ export function StaffDashboard() {
   const handleCheckIn = async (bookingId: string) => {
     if (!user) return;
     try {
-            await api.post('/checkins', { reservation: bookingId, user: user.id });
-      await api.patch(`/reservations/${bookingId}`, { status: 'confirmed' });
+      await checkinsAPI.create({ reservation: bookingId, user: user._id });
+      await reservationsAPI.update(bookingId, { status: 'confirmed' });
 
       toast({
         title: "Guest Checked In",
         description: "Guest has been successfully checked in.",
       });
 
-      // Refresh data
-      const res = await fetch('http://localhost:3000/reservations');
-      const updatedBookings = await res.json();
+            // Refresh data
+      const updatedBookings = await reservationsAPI.getAll();
       setBookings(updatedBookings);
 
     } catch (error) {
@@ -158,16 +127,15 @@ export function StaffDashboard() {
 
   const handleMarkNoShow = async (bookingId: string) => {
     try {
-      await api.patch(`/reservations/${bookingId}`, { status: 'cancelled' });
+            await reservationsAPI.update(bookingId, { status: 'cancelled' });
 
       toast({
         title: "Marked as No-Show",
         description: "Booking has been marked as no-show.",
       });
 
-      // Refresh data
-      const res = await fetch('http://localhost:3000/reservations');
-      const updatedBookings = await res.json();
+            // Refresh data
+      const updatedBookings = await reservationsAPI.getAll();
       setBookings(updatedBookings);
 
     } catch (error) {
@@ -190,11 +158,11 @@ export function StaffDashboard() {
     }
 
     try {
-      const { data: booking } = await api.get(`/reservations/${searchCode}`);
+            const booking = await reservationsAPI.getById(searchCode);
       // For simplicity, we'll just toast. A real app might show the booking details.
       toast({
         title: "Booking Found",
-        description: `Found booking for ${booking.user.firstName} at ${booking.space.name}`,
+        description: `Found booking for ${booking.user.name} at ${booking.space.name}`,
       });
     } catch (error) {
       toast({
@@ -205,7 +173,7 @@ export function StaffDashboard() {
     }
   };
 
-  const handleReportIssue = () => {
+  const handleReportIssue = async () => {
     if (!newIssue.bookingCode || !newIssue.issue) {
       toast({
         title: "Missing Information",
@@ -215,12 +183,22 @@ export function StaffDashboard() {
       return
     }
 
-    toast({
-      title: "Issue Reported",
-      description: "The issue has been reported and will be addressed.",
-    })
-
-    setNewIssue({ bookingCode: "", issue: "", priority: "medium" })
+        try {
+      await issuesAPI.create(newIssue);
+      toast({
+        title: "Issue Reported",
+        description: "The issue has been reported and will be addressed.",
+      });
+      setNewIssue({ bookingCode: "", issue: "", priority: "medium" });
+      const updatedIssues = await issuesAPI.getAll();
+      setIssues(updatedIssues);
+    } catch (error) {
+      toast({
+        title: "Failed to report issue",
+        description: "Could not report the issue. Please try again later.",
+        variant: "destructive",
+      });
+    }
   }
 
   return (
@@ -306,7 +284,7 @@ export function StaffDashboard() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-muted-foreground">
                           <div>
                             <p>
-                              <strong>Customer:</strong> {`${booking.user.firstName} ${booking.user.lastName}`}
+                              <strong>Customer:</strong> {booking.user.name}
                             </p>
                             <p>
                               </p>

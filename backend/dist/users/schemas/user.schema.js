@@ -42,9 +42,15 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserSchema = exports.User = void 0;
+exports.UserSchema = exports.User = exports.UserRole = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
-const bcrypt = __importStar(require("bcryptjs"));
+const bcrypt = __importStar(require("bcrypt"));
+var UserRole;
+(function (UserRole) {
+    UserRole["CONSUMER"] = "consumer";
+    UserRole["OWNER"] = "owner";
+    UserRole["STAFF"] = "staff";
+})(UserRole || (exports.UserRole = UserRole = {}));
 let User = class User {
     name;
     email;
@@ -53,19 +59,19 @@ let User = class User {
 };
 exports.User = User;
 __decorate([
-    (0, mongoose_1.Prop)({ required: true }),
+    (0, mongoose_1.Prop)({ required: true, trim: true }),
     __metadata("design:type", String)
 ], User.prototype, "name", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: true, unique: true }),
+    (0, mongoose_1.Prop)({ required: true, unique: true, trim: true, lowercase: true }),
     __metadata("design:type", String)
 ], User.prototype, "email", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: true }),
+    (0, mongoose_1.Prop)({ required: true, select: false }),
     __metadata("design:type", String)
 ], User.prototype, "password", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ type: String, enum: ['consumer', 'owner', 'staff'], default: 'consumer' }),
+    (0, mongoose_1.Prop)({ type: String, enum: Object.values(UserRole), default: UserRole.CONSUMER }),
     __metadata("design:type", String)
 ], User.prototype, "role", void 0);
 exports.User = User = __decorate([
@@ -76,8 +82,7 @@ exports.UserSchema.pre('save', async function (next) {
     if (!this.isModified('password')) {
         return next();
     }
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+    this.password = await bcrypt.hash(this.password, 10);
     next();
 });
 //# sourceMappingURL=user.schema.js.map

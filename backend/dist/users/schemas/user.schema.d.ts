@@ -1,10 +1,15 @@
 import { Document } from 'mongoose';
 export type UserDocument = User & Document;
+export declare enum UserRole {
+    CONSUMER = "consumer",
+    OWNER = "owner",
+    STAFF = "staff"
+}
 export declare class User {
     name: string;
     email: string;
     password: string;
-    role: string;
+    role: UserRole;
 }
 export declare const UserSchema: import("mongoose").Schema<User, import("mongoose").Model<User, any, any, any, Document<unknown, any, User, any, {}> & User & {
     _id: import("mongoose").Types.ObjectId;

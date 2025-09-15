@@ -5,23 +5,23 @@ import { useParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Users, Calendar, Clock } from "lucide-react";
-import { spacesAPI, bookingsAPI } from "@/lib/api";
-import { useAuth } from "@/contexts/auth-context";
+import { MapPin, Users } from "lucide-react";
+import { spacesAPI, reservationsAPI, Space } from "@/lib/api";
+import { useAuth } from '@/contexts/auth-context';
 import { processPayment } from "@/lib/razorpay";
 
 export default function SpaceDetailPage() {
-  const params = useParams();
+    const params = useParams();
   const { user } = useAuth();
-  const [space, setSpace] = useState<any>(null);
+  const [space, setSpace] = useState<Space | null>(null);
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState(false);
 
   useEffect(() => {
     const fetchSpace = async () => {
       try {
-        const response = await spacesAPI.getById(params.id as string);
-        setSpace(response.data);
+        const spaceData = await spacesAPI.getById(params.id as string);
+        setSpace(spaceData);
       } catch (error) {
         console.error('Failed to fetch space:', error);
       } finally {
@@ -34,30 +34,48 @@ export default function SpaceDetailPage() {
     }
   }, [params.id]);
 
-  const handleBooking = async () => {
+    const handleBooking = async () => {
     if (!user) {
-      alert('Please login to book a space');
+      alert('Please log in to book a space.');
       return;
     }
+    if (!space) return;
 
     setBooking(true);
     try {
-      // Create booking
-      const bookingData = {
-        space: space._id,
-        user: user.id,
-        startTime: new Date(),
-        endTime: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
-        amount: space.hourlyRate * 2, // 2 hours
+      // 1. Create a reservation on the backend
+      // This will return a pending reservation with a Razorpay order ID
+      const startTime = new Date();
+      const endTime = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours from now
+
+      const reservationData = {
+        spaceId: space._id,
+                userId: user._id,
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
       };
 
-      const bookingResponse = await bookingsAPI.create(bookingData);
-      const bookingId = bookingResponse.data._id;
+      const pendingReservation = await reservationsAPI.create(reservationData);
 
-      // Process payment
-      await processPayment(bookingId, space.hourlyRate * 2, user);
-      
-      alert('Booking successful!');
+      // 2. Use the order ID from the backend to process payment
+      const { orderId } = pendingReservation.paymentDetails;
+      const { totalPrice } = pendingReservation;
+
+      await processPayment(
+        orderId,
+        totalPrice,
+                { name: user.name, email: user.email },
+        (paymentResponse) => {
+          console.log('Payment successful!', paymentResponse);
+          alert('Booking and Payment successful! Your reservation is confirmed.');
+          // Here you might want to redirect to a confirmation page or update the UI
+        },
+        (error) => {
+          console.error('Payment failed:', error);
+          alert(`Payment failed: ${error.description || 'Please try again.'}`);
+        }
+      );
+
     } catch (error) {
       console.error('Booking failed:', error);
       alert('Booking failed. Please try again.');
@@ -86,7 +104,7 @@ export default function SpaceDetailPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
-          <img src="/placeholder.svg" alt={space.name} className="w-full h-96 object-cover rounded-lg" />
+          <img src={space.images[0] || "/placeholder.svg"} alt={space.name} className="w-full h-96 object-cover rounded-lg" />
         </div>
         
         <div>
@@ -122,7 +140,7 @@ export default function SpaceDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
-                ${space.hourlyRate || 0}
+                ₹{space.pricing?.hourlyRate || 500}
                 <span className="text-lg font-normal text-muted-foreground">/hour</span>
               </div>
             </CardContent>
@@ -130,11 +148,11 @@ export default function SpaceDetailPage() {
 
           <Button 
             onClick={handleBooking} 
-            disabled={booking || !user}
+                        disabled={booking || !user}
             className="w-full"
             size="lg"
           >
-            {booking ? 'Processing...' : !user ? 'Login to Book' : 'Book Now'}
+            {booking ? 'Processing...' : user ? 'Book Now' : 'Login to Book'}
           </Button>
         </div>
       </div>

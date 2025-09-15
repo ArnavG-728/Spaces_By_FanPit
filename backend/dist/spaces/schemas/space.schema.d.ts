@@ -1,17 +1,16 @@
-import { Document, Schema as MongooseSchema } from 'mongoose';
-import { User } from '../../users/schemas/user.schema';
+import { Document } from 'mongoose';
+import { Pricing } from './pricing.schema';
 export type SpaceDocument = Space & Document;
 export declare class Space {
     name: string;
     description: string;
-    location: string;
-    price: number;
-    owner: User;
-    amenities: string[];
+    address: string;
     capacity: number;
+    amenities: string[];
     images: string[];
+    pricing: Pricing;
 }
-export declare const SpaceSchema: MongooseSchema<Space, import("mongoose").Model<Space, any, any, any, Document<unknown, any, Space, any, {}> & Space & {
+export declare const SpaceSchema: import("mongoose").Schema<Space, import("mongoose").Model<Space, any, any, any, Document<unknown, any, Space, any, {}> & Space & {
     _id: import("mongoose").Types.ObjectId;
 } & {
     __v: number;

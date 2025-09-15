@@ -1,48 +1,55 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { UsersService } from '../users/users.service';
+import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcryptjs';
+import { UsersService } from '../users/users.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
+import * as bcrypt from 'bcrypt';
+import { User, UserDocument } from '../users/schemas/user.schema';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private usersService: UsersService,
-    private jwtService: JwtService,
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
   ) {}
+
+  async signup(createUserDto: CreateUserDto): Promise<{ user: User; token: string }> {
+    const { email } = createUserDto;
+
+    // Check if user already exists
+    const existingUser = await this.usersService.findByEmail(email);
+    if (existingUser) {
+      throw new ConflictException('Email already registered');
+    }
+
+    // Create new user
+    const user: UserDocument = await this.usersService.create(createUserDto);
+
+    // Generate JWT
+    const payload = { email: user.email, sub: user._id };
+    const token = this.jwtService.sign(payload);
+
+    // Return user and token (exclude password)
+    const userObject = user.toObject();
+    delete userObject.password;
+
+    return { user: userObject, token };
+  }
 
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.usersService.findByEmail(email);
     if (user && (await bcrypt.compare(pass, user.password))) {
-      const { password, ...result } = user;
+      const { password, ...result } = user.toObject();
       return result;
     }
     return null;
   }
 
-  async login(user: any) {
-    const payload = { email: user.email, sub: user._id, role: user.role };
+    async login(user: User & { _id: any }) {
+    const payload = { email: user.email, sub: user._id };
     return {
-      access_token: this.jwtService.sign(payload),
-    };
-  }
-
-  async signup(createUserDto: CreateUserDto) {
-    // Check if user already exists
-    const existingUser = await this.usersService.findByEmail(createUserDto.email);
-    if (existingUser) {
-      throw new UnauthorizedException('User already exists');
-    }
-    
-    // Create the user
-    const user = await this.usersService.create(createUserDto);
-    
-    // Return success response with user data (without password)
-    const userObj = user as any;
-    const { password, ...result } = userObj;
-    return {
-      message: 'User created successfully',
-      user: result
+      user,
+      token: this.jwtService.sign(payload),
     };
   }
 }
+

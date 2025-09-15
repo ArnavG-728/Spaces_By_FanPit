@@ -15,8 +15,8 @@ export function FeaturedSpaces() {
   useEffect(() => {
     const fetchSpaces = async () => {
       try {
-        const response = await spacesAPI.getAll()
-        setSpaces(response.data.slice(0, 6)) // Show only first 6 spaces
+        const spacesData = await spacesAPI.getAllSpaces()
+        setSpaces(spacesData.slice(0, 6)) // Show only first 6 spaces
       } catch (error) {
         console.error('Failed to fetch spaces:', error)
         setSpaces([]) // Show empty state instead of mock data
@@ -82,7 +82,7 @@ export function FeaturedSpaces() {
 
                   <CardFooter className="flex items-center justify-between">
                     <div className="text-lg font-semibold">
-                      ${space.hourlyRate || 0}
+                      ${ (space?.pricing?.hourlyRate ?? space?.hourlyRate ?? 0) }
                       <span className="text-sm font-normal text-muted-foreground">/hour</span>
                     </div>
                     <Link href={`/spaces/${space._id}`}>

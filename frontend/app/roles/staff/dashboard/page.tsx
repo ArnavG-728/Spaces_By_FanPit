@@ -1,8 +1,8 @@
 "use client"
 
-import { useAuth } from "@/contexts/auth-context"
 import { Navbar } from "@/components/navbar"
 import { StaffDashboard } from "../_components/staff-dashboard"
+import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 

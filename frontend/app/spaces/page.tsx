@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Users, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { spacesAPI } from "@/lib/api";
 
 export default function SpacesPage() {
   const [spaces, setSpaces] = useState<any[]>([]);
