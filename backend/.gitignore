@@ -28,7 +28,7 @@ pids
 *.tsbuildinfo
 
 # Environment files
-.env
+# .env
 .env.*
 !.env.example
 
